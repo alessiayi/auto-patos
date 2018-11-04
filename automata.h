@@ -31,7 +31,7 @@ class Automata{
         typedef Transition<self> transition;
         typedef map<S, state*> StateSeq;
         typedef vector<transition*> TransitionSeq;
-        typedef typename StateSeq::iterator NodeIte;
+        typedef typename StateSeq::iterator StateIte;
         typedef typename TransitionSeq::iterator TransitionIte;
 
     private:
@@ -41,7 +41,7 @@ class Automata{
 
         // Auxiliary methods
         void addTransition(transition sometransition);
-        TransitionIte removeTransition(state* vi, state* vf);
+        TransitionIte removeTransition(state* sinitial, state* sfinal);
 
     public:
         // Constructors and destructor
@@ -59,9 +59,9 @@ class Automata{
 
         // Basic metodos 
         bool addState(S state_name);
-        bool addTransition(S Vi, S Vf, T symbol);
+        bool addTransition(S sinitial, S sfinal, T symbol);
         bool removeState(S state_name);
-        bool removeTransition(S vi_name, S vf_name);
+        bool removeTransition(S sinitial_name, S sfinal_name);
         bool setStateType(S state_name, int new_type);
         void setAlphabet(vector<Al>& alpha);
 
@@ -80,10 +80,10 @@ Explicit template specializations
 template<>
 automata::Automata(int size, true_type) { // int, float, char
     sizeOfAutomata[0] = size;
-    state* newnode;
+    state* newstate;
     for (S i=0;i<size;++i){
-        newnode=new state(i+65*(sizeof(S)==1));
-        states.insert(pair <S, state*> (i+65*(sizeof(S)==1), newnode));
+        newstate=new state(i+65*(sizeof(S)==1));
+        states.insert(pair <S, state*> (i+65*(sizeof(S)==1), newstate));
     }
 };
 
@@ -91,10 +91,10 @@ automata::Automata(int size, true_type) { // int, float, char
 template<>
 automata::Automata(int size, false_type) { // string
     sizeOfAutomata[0] = size;
-    state* newnode;
+    state* newstate;
     for (char i=0;i<size;++i){
-        newnode=new state(string(1, i+65));
-        states.insert(pair <S, state*> (string(1, i+65), newnode));
+        newstate=new state(string(1, i+65));
+        states.insert(pair <S, state*> (string(1, i+65), newstate));
     }
 };
 */
@@ -109,12 +109,12 @@ automata::~Automata(){
 };
 
 template<>
-automata::TransitionIte automata::removeTransition(state* vi, state* vf){
+automata::TransitionIte automata::removeTransition(state* sinitial, state* sfinal){
     automata::TransitionIte it;
-    for (auto it_edge = vi->transitions.begin(); it_edge!=vi->transitions.end(); ++it_edge){
-        if ((*it_edge)->states[1]==vf) {
-            it = vi->transitions.erase(it_edge);
-            delete *it_edge;
+    for (auto it_transition = sinitial->transitions.begin(); it_transition!=sinitial->transitions.end(); ++it_transition){
+        if ((*it_transition)->states[1]==sfinal) {
+            it = sinitial->transitions.erase(it_transition);
+            delete *it_transition;
             break;
         }
     }
@@ -139,12 +139,12 @@ automata::Automata(const Automata &other_graph) {
 
 
 template<>
-bool automata::removeTransition(S vi_name, S vf_name){
-    if (states.find(vi_name)==states.end() || states.find(vf_name)==states.end()) return false; // not found
-    state* vi = states[vi_name];
-    state* vf = states[vf_name];
+bool automata::removeTransition(S sinitial_name, S sfinal_name){
+    if (states.find(sinitial_name)==states.end() || states.find(sfinal_name)==states.end()) return false; // not found
+    state* sinitial = states[sinitial_name];
+    state* sfinal = states[sfinal_name];
 
-    removeTransition(vi, vf);
+    removeTransition(sinitial, sfinal);
     return true;
 };
 
@@ -173,31 +173,31 @@ int* automata::size(){ return sizeOfAutomata; };
 template<>
 bool automata::addState(S state_name){
     if (states.find(state_name)!=states.end()) return false; // getName taken
-    state* newnode = new state(state_name);
-    states.insert(pair<S, state*> (state_name, newnode));
+    state* newstate = new state(state_name);
+    states.insert(pair<S, state*> (state_name, newstate));
     ++sizeOfAutomata[0];
     return true;
 };
 
 
 template<>
-bool automata::addTransition(S Vi, S Vf, T symbol){
+bool automata::addTransition(S sinitial, S sfinal, T symbol){
     // Comprobar que los vertices existan
-    if (!(states.count(Vi) && states.count(Vf)))
+    if (!(states.count(sinitial) && states.count(sfinal)))
         return false;
 
-    state* initial_node=states[Vi];
-    state* final_node=states[Vf];
+    state* initial_state=states[sinitial];
+    state* final_state=states[sfinal];
 
-    transition* new_edge = new transition(initial_node,final_node,symbol);
-    auto edge_in_edges = initial_node->transitions.begin();
+    transition* new_transtition = new transition(initial_state,final_state,symbol);
+    auto transition_in_transitions = initial_state->transitions.begin();
 
     // para mantener los transitions ordenados en state.transitions
-    while (edge_in_edges!=initial_node->transitions.end() && *new_edge>**edge_in_edges) ++edge_in_edges;
+    while (transition_in_transitions!=initial_state->transitions.end() && *new_transtition>**transition_in_transitions) ++transition_in_transitions;
 
-    if (initial_node->transitions.empty() || *edge_in_edges==*initial_node->transitions.end()) initial_node->transitions.push_back(new_edge); // el nuevo transition debe ir al final
-    else if (*new_edge==**edge_in_edges) return false; // hay otro transition con un mismo inicio y fin
-    else initial_node->transitions.insert(edge_in_edges, new_edge);
+    if (initial_state->transitions.empty() || *transition_in_transitions==*initial_state->transitions.end()) initial_state->transitions.push_back(new_transtition); // el nuevo transition debe ir al final
+    else if (*new_transtition==**transition_in_transitions) return false; // hay otro transition con un mismo inicio y fin
+    else initial_state->transitions.insert(transition_in_transitions, new_transtition);
 
     ++sizeOfAutomata[1];
     return true;
@@ -215,9 +215,9 @@ bool automata::removeState(S state_name){
     if (states.find(state_name)==states.end()) return false; // not found
     state* to_remove = states[state_name];
 
-    auto it_edge = to_remove->transitions.begin();
-    while (it_edge!=to_remove->transitions.end()){
-        it_edge = removeTransition((*it_edge)->states[0], (*it_edge)->states[1]);
+    auto it_transition = to_remove->transitions.begin();
+    while (it_transition!=to_remove->transitions.end()){
+        it_transition = removeTransition((*it_transition)->states[0], (*it_transition)->states[1]);
     }
     delete to_remove;
     states.erase(state_name);
