@@ -4,42 +4,39 @@
 #include "node.h"
 
 template <typename G>
-class Edge {
+class Transition {
     public:
-        typedef typename G::E E; //saca E de Graph
-        typedef typename G::node node;
-        //entre que nodos esta
-        node* nodes[2];
+        typedef typename G::T T;
+        typedef typename G::state state;
+        state* states[2];
 
     private:
-        E peso; //E es tipo int
-        bool dir;
+        T symbol;
 
 public:
-    Edge(node* Vi,node* Vf,E peso, bool dir):peso(peso),dir(dir){
-            nodes[0]=Vi;
-            nodes[1]=Vf;
+    Transition(state* Vi,state* Vf,T symbol):symbol(symbol){
+            states[0]=Vi;
+            states[1]=Vf;
     }
 
-    int get_peso(){ return peso; }
-    bool get_dir(){ return dir; }
-    bool operator==(Edge<G> cmp){
-      return nodes[0] == cmp.nodes[0] &&
-             nodes[1] == cmp.nodes[1];
+    int getSymbol(){ return symbol; }
+    bool operator==(Transition<G> cmp){
+      return states[0] == cmp.states[0] &&
+             states[1] == cmp.states[1];
     }
 
-    //Comparar por peso
-    //Si son iguales, comparar por el valor de nodos
-    bool operator>(Edge<G> cmp) const{
-      return cmp.peso==peso? nodes[1]>cmp.nodes[1] : peso>cmp.peso;
+    // Comparar por symbol
+    // Si son iguales, comparar por el valor de nodos
+    bool operator>(Transition<G> cmp) const{
+      return cmp.symbol==symbol? states[1]>cmp.states[1] : symbol>cmp.symbol;
     }
 
-    bool operator<(Edge<G> cmp) const{
-     return cmp.peso==peso? nodes[1]<cmp.nodes[1] : peso<cmp.peso;
+    bool operator<(Transition<G> cmp) const{
+     return cmp.symbol==symbol? states[1]<cmp.states[1] : symbol<cmp.symbol;
     }
 
-    ~Edge(){
-        nodes[0] = nodes[1] = nullptr;
+    ~Transition(){
+        states[0] = states[1] = nullptr;
     }
 };
 

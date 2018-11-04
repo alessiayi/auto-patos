@@ -2,27 +2,26 @@
 #define NODE_H
 
 template <typename G>
-class Node {
+class State {
     public:
-        //obtener tipos de Graph
-        typedef typename G::N N;
-        typedef typename G::E E;
-        typedef typename G::edge edge;
-        typedef typename G::EdgeSeq EdgeSeq;
+        typedef typename G::S S;
+        typedef typename G::T T;
+        typedef typename G::transition transition;
+        typedef typename G::TransitionSeq TransitionSeq;
     private:
-        N data;
+        S name;
 
 public:
-        EdgeSeq edges;
+        TransitionSeq transitions;
 
-        Node(N nombre):data(nombre){};
+        State(S _name):name(_name){};
         // Métodos de acceso
-        N get_data(){ return data; }
+        S getName(){ return name; }
 
-        ~Node(){
-            while(!edges.empty()) {
-                delete edges.back();
-                edges.pop_back();
+        ~State(){
+            while(!transitions.empty()) {
+                delete transitions.back();
+                transitions.pop_back();
             }
         }
 };

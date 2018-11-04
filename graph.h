@@ -12,39 +12,37 @@
 using namespace std;
 
 struct Traits {
-	typedef string N;
-	typedef int E;
+	typedef string S;
+	typedef int T;
 };
 
 template <typename Tr>
-class Graph{
+class Automata{
     public:
-    	typedef typename Tr::N N;
-        typedef typename Tr::E E;
-        typedef Graph<Tr> self;
-        typedef Node<self> node;
-        typedef Edge<self> edge;
-        typedef map<N, node*> NodeSeq;
-        typedef vector<edge*> EdgeSeq;
-        typedef typename NodeSeq::iterator NodeIte;
-        typedef typename EdgeSeq::iterator EdgeIte;
+    	typedef typename Tr::S S;
+        typedef typename Tr::T T;
+        typedef Automata<Tr> self;
+        typedef State<self> state;
+        typedef Transition<self> transition;
+        typedef map<S, state*> StateSeq;
+        typedef vector<transition*> TransitionSeq;
+        typedef typename StateSeq::iterator NodeIte;
+        typedef typename TransitionSeq::iterator TransitionIte;
 
     private:
-        NodeSeq nodes; // Mapa de punteros de nodos <data (node name), node pointer>
-        
-        int sizeOfGraph[2]= {0,0}; // sizeOfGraph[0]: num de nodes -  sizeOfGraph[1]: num de edges
-
+        StateSeq states; // Mapa de punteros de estados <states.name, state pointer>
+        int sizeOfAutomata[2]= {0,0}; // sizeOfAutomata[0]: num de states -  sizeOfAutomata[1]: num de transitions
 
 	    // Funciones auxiliares y utiles
-	    void add_edge(edge someedge){
-        	add_edge(someedge.nodes[0]->get_data(), someedge.nodes[1]->get_data(), someedge.get_peso(), someedge.get_dir());
+	    void addTransition(transition sometransition){
+        	addTransition(sometransition.states[0]->getName(), sometransition.states[1]->getName(), sometransition.getSymbol());
         };
 
-        EdgeIte remove_edge(node* vi, node* vf){
-        	EdgeIte it;
-        	for (auto it_edge = vi->edges.begin(); it_edge!=vi->edges.end(); ++it_edge){
-				if ((*it_edge)->nodes[1]==vf) {
-					it = vi->edges.erase(it_edge);
+        TransitionSeq removeTransition(state* vi, state* vf){
+        	TransitionSeq it;
+        	for (auto it_edge = vi->transitions.begin(); it_edge!=vi->transitions.end(); ++it_edge){
+				if ((*it_edge)->states[1]==vf) {
+					it = vi->transitions.erase(it_edge);
 					delete *it_edge;
 					break;
 				}
@@ -55,100 +53,98 @@ class Graph{
 	public:
 
 		// Constructores
-		Graph(int size) : Graph(size, is_arithmetic<N>{}){};
+		Automata(int size) : Automata(size, is_arithmetic<S>{}){};
 
-		Graph(int size, true_type) { // int, float, char
-			sizeOfGraph[0] = size;
-			node* newnode;
-			for (N i=0;i<size;++i){
-				newnode=new node(i+65*(sizeof(N)==1));
-				nodes.insert(pair <N, node*> (i+65*(sizeof(N)==1), newnode));
+		Automata(int size, true_type) { // int, float, char
+			sizeOfAutomata[0] = size;
+			state* newnode;
+			for (S i=0;i<size;++i){
+				newnode=new state(i+65*(sizeof(S)==1));
+				states.insert(pair <S, state*> (i+65*(sizeof(S)==1), newnode));
 			}
 		};
 
-		Graph(int size, false_type) { // string
-			sizeOfGraph[0] = size;
-			node* newnode;
+		Automata(int size, false_type) { // string
+			sizeOfAutomata[0] = size;
+			state* newnode;
 			for (char i=0;i<size;++i){
-				newnode=new node(string(1, i+65));
-				nodes.insert(pair <N, node*> (string(1, i+65), newnode));
+				newnode=new state(string(1, i+65));
+				states.insert(pair <S, state*> (string(1, i+65), newnode));
 			}
 		};
 
-		Graph(const Graph &other_graph) { // copy constructor
-			nodes = other_graph.nodes;
-			sizeOfGraph[0] = other_graph.sizeOfGraph[0];
-			sizeOfGraph[1] = other_graph.sizeOfGraph[1];
+		Automata(const Automata &other_graph) { // copy constructor
+			states = other_graph.states;
+			sizeOfAutomata[0] = other_graph.sizeOfAutomata[0];
+			sizeOfAutomata[1] = other_graph.sizeOfAutomata[1];
 		};
 
 
 		// Metodos para debugging
 		void print(){
-			for (auto& thenode : nodes){
-				cout<< "\nNodo " << thenode.first << ": ";
-				for (auto& theedge : thenode.second->edges){
-					cout << theedge->nodes[1]->get_data() << " ";
+			for (auto& thestates : states){
+				cout<< "\nNodo " << thestates.first << ": ";
+				for (auto& thetransition : thestates.second->transitions){
+					cout << thetransition->states[1]->getName() << " ";
 				}
 			}
 		};
 
 
 		// Metodos de informacion basica
-		int* size(){ return sizeOfGraph; };
+		int* size(){ return sizeOfAutomata; };
 
 
 		// Metodos fundamentales
-		bool add_node(N node_name){
-			if (nodes.find(node_name)!=nodes.end()) return false; // name taken
-			node* newnode = new node(node_name);
-			nodes.insert(pair<N, node*> (node_name, newnode));
-			++sizeOfGraph[0];
+		bool addState(S state_name){
+			if (states.find(state_name)!=states.end()) return false; // getName taken
+			state* newnode = new state(state_name);
+			states.insert(pair<S, state*> (state_name, newnode));
+			++sizeOfAutomata[0];
 			return true;
 		};
 
-		bool add_edge(N Vi, N Vf, E peso, bool dir){
+		bool addTransition(S Vi, S Vf, T symbol){
 			// Comprobar que los vertices existan
-			if (!(nodes.count(Vi) && nodes.count(Vf)))
+			if (!(states.count(Vi) && states.count(Vf)))
 				return false;
 
-			node* initial_node=nodes[Vi];
-			node* final_node=nodes[Vf];
-			// si el edge no tiene direccion, no hay nodo final ni inicial
-			// (debe agregarse en la lista de edges de ambos nodos)
+			state* initial_node=states[Vi];
+			state* final_node=states[Vf];
 
-			edge* new_edge = new edge(initial_node,final_node,peso,dir);
-			auto edge_in_edges = initial_node->edges.begin();
+			transition* new_edge = new transition(initial_node,final_node,symbol);
+			auto edge_in_edges = initial_node->transitions.begin();
 
-			// para mantener los edges ordenados en node.edges
-			while (edge_in_edges!=initial_node->edges.end() && *new_edge>**edge_in_edges) ++edge_in_edges;
+			// para mantener los transitions ordenados en state.transitions
+			while (edge_in_edges!=initial_node->transitions.end() && *new_edge>**edge_in_edges) ++edge_in_edges;
 
-			if (initial_node->edges.empty() || *edge_in_edges==*initial_node->edges.end()) initial_node->edges.push_back(new_edge); // el nuevo edge debe ir al final
-			else if (*new_edge==**edge_in_edges) return false; // hay otro edge con un mismo inicio y fin
-			else initial_node->edges.insert(edge_in_edges, new_edge);
+			if (initial_node->transitions.empty() || *edge_in_edges==*initial_node->transitions.end()) initial_node->transitions.push_back(new_edge); // el nuevo transition debe ir al final
+			else if (*new_edge==**edge_in_edges) return false; // hay otro transition con un mismo inicio y fin
+			else initial_node->transitions.insert(edge_in_edges, new_edge);
 
-			++sizeOfGraph[1];
+			++sizeOfAutomata[1];
 			return true;
 		};
 
-		bool remove_node(N node_name){
-			if (nodes.find(node_name)==nodes.end()) return false; // not found
-			node* to_remove = nodes[node_name];
+		bool removeState(S state_name){
+			if (states.find(state_name)==states.end()) return false; // not found
+			state* to_remove = states[state_name];
 
-			auto it_edge = to_remove->edges.begin();
-			while (it_edge!=to_remove->edges.end()){
-				it_edge = remove_edge((*it_edge)->nodes[0], (*it_edge)->nodes[1]);
+			auto it_edge = to_remove->transitions.begin();
+			while (it_edge!=to_remove->transitions.end()){
+				it_edge = removeTransition((*it_edge)->states[0], (*it_edge)->states[1]);
 			}
 			delete to_remove;
-			nodes.erase(node_name);
+			states.erase(state_name);
 			return true;
 		}
 
-		bool remove_edge(N vi_name, N vf_name){
-			if (nodes.find(vi_name)==nodes.end() || nodes.find(vf_name)==nodes.end()) return false; // not found
-			node* vi = nodes[vi_name];
-			node* vf = nodes[vf_name];
+		bool removeTransition(S vi_name, S vf_name){
+			if (states.find(vi_name)==states.end() || states.find(vf_name)==states.end()) return false; // not found
+			state* vi = states[vi_name];
+			state* vf = states[vf_name];
 
-			remove_edge(vi, vf);
+			removeTransition(vi, vf);
 			return true;
 		}
 
@@ -158,16 +154,16 @@ class Graph{
 
 
 		//Destructor
-		~Graph(){
-			auto it = nodes.begin();
-			while (!nodes.empty()){
+		~Automata(){
+			auto it = states.begin();
+			while (!states.empty()){
 				delete (*it).second;
-				it = nodes.erase(it);
+				it = states.erase(it);
 			}
 		}
 
 };
 
-typedef Graph<Traits> graph;
+typedef Automata<Traits> automata;
 
 #endif
