@@ -6,8 +6,8 @@
 #include <vector>
 #include <map>
 
-#include "node.h"
-#include "edge.h"
+#include "state.h"
+#include "transition.h"
 
 using namespace std;
 
