@@ -1,17 +1,18 @@
-#ifndef NODE_H
-#define NODE_H
+#ifndef STATE_H
+#define STATE_H
 
-template <typename G>
+template <typename A>
 class State {
     public:
-        typedef typename G::S S;
-        typedef typename G::T T;
-        typedef typename G::transition transition;
-        typedef typename G::TransitionSeq TransitionSeq;
+        typedef typename A::S S;
+        typedef typename A::T T;
+        typedef typename A::transition transition;
+        typedef typename A::TransitionSeq TransitionSeq;
+
     private:
         S name;
 
-public:
+    public:
         TransitionSeq transitions;
 
         State(S _name):name(_name){};
@@ -19,10 +20,7 @@ public:
         S getName(){ return name; }
 
         ~State(){
-            while(!transitions.empty()) {
-                delete transitions.back();
-                transitions.pop_back();
-            }
+            while(!transitions.empty()) { delete transitions.back(); transitions.pop_back(); }
         }
 };
 

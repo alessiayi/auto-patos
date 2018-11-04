@@ -1,5 +1,5 @@
-#ifndef GRAPH_H
-#define GRAPH_H
+#ifndef AUTOMATA_H
+#define AUTOMATA_H
 
 #include <iostream>
 
@@ -18,20 +18,20 @@ struct Traits {
 
 template <typename Tr>
 class Automata{
-    public:
-    	typedef typename Tr::S S;
-        typedef typename Tr::T T;
-        typedef Automata<Tr> self;
-        typedef State<self> state;
-        typedef Transition<self> transition;
-        typedef map<S, state*> StateSeq;
-        typedef vector<transition*> TransitionSeq;
-        typedef typename StateSeq::iterator NodeIte;
-        typedef typename TransitionSeq::iterator TransitionIte;
+	public:
+		typedef typename Tr::S S;
+	    typedef typename Tr::T T;
+	    typedef Automata<Tr> self;
+	    typedef State<self> state;
+	    typedef Transition<self> transition;
+	    typedef map<S, state*> StateSeq;
+	    typedef vector<transition*> TransitionSeq;
+	    typedef typename StateSeq::iterator NodeIte;
+	    typedef typename TransitionSeq::iterator TransitionIte;
 
     private:
-        StateSeq states; // Mapa de punteros de estados <states.name, state pointer>
-        int sizeOfAutomata[2]= {0,0}; // sizeOfAutomata[0]: num de states -  sizeOfAutomata[1]: num de transitions
+        StateSeq states; // Map: <key, value> = <state.name, *state>
+        int sizeOfAutomata[2]= {0,0}; // [0]: # states -  [1]: # transitions
 
 	    // Funciones auxiliares y utiles
 	    void addTransition(transition sometransition){
