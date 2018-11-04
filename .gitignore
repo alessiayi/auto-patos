@@ -1,0 +1,8 @@
+# Ignore files without extension
+* # ignore all
+!*/ # unignore files in directory
+!*.* # unignore files with extension
+
+# Test files
+test.cpp
+
