@@ -11,17 +11,35 @@ class State {
 
     private:
         S name;
-
     public:
         TransitionSeq transitions;
+        int type=0; // 0: normal state
+                    // 1: initial state
+                    // 2: final state
 
-        State(S _name):name(_name){};
-        // Métodos de acceso
-        S getName(){ return name; }
+        // Constructors and destructor
+        State(S _name, int _type=0);
+        ~State();
 
-        ~State(){
-            while(!transitions.empty()) { delete transitions.back(); transitions.pop_back(); }
-        }
+        // Access methods
+        S getName();
+
 };
+
+template <typename A>
+State<A>::State(S _name, int _type) : name(_name), type(_type){};
+
+template <typename A>
+State<A>::~State(){
+    while(!transitions.empty()){ 
+        delete transitions.back();
+        transitions.pop_back(); 
+    } 
+}
+
+template <typename A>
+typename A::S State<A>::getName(){ return name; };
+
+
 
 #endif

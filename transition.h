@@ -12,32 +12,52 @@ class Transition {
 
     private:
         T symbol;
-
+        
     public:
-        Transition(state* Vi,state* Vf,T symbol):symbol(symbol){
-                states[0]=Vi;
-                states[1]=Vf;
-        }
+        // Constructor and destructor
+        Transition(state* Vi,state* Vf,T symbol);
+        ~Transition();
 
-        int getSymbol(){ return symbol; }
-        bool operator==(Transition<A> cmp){
-          return states[0] == cmp.states[0] &&
-                 states[1] == cmp.states[1];
-        }
+        // Access methods
+        int getSymbol();
 
-        // Comparar por symbol
-        // Si son iguales, comparar por el valor de states
-        bool operator>(Transition<A> cmp) const{
-          return cmp.symbol==symbol? states[1]>cmp.states[1] : symbol>cmp.symbol;
-        }
-
-        bool operator<(Transition<A> cmp) const{
-         return cmp.symbol==symbol? states[1]<cmp.states[1] : symbol<cmp.symbol;
-        }
-
-        ~Transition(){
-            states[0] = states[1] = nullptr;
-        }
+        // Overloads
+        bool operator==(Transition<A> cmp);
+        bool operator>(Transition<A> cmp) const;
+        bool operator<(Transition<A> cmp) const;
 };
+
+template <typename A>
+Transition<A>::Transition(state* Vi,state* Vf,T symbol):symbol(symbol){
+    states[0]=Vi;
+    states[1]=Vf;
+}
+
+template <typename A>
+Transition<A>::~Transition(){
+    states[0] = states[1] = nullptr;
+}
+
+
+template <typename A>
+int Transition<A>::getSymbol(){ return symbol; }
+
+
+template <typename A>
+bool Transition<A>::operator==(Transition<A> cmp){
+  return states[0] == cmp.states[0] &&
+         states[1] == cmp.states[1];
+}
+
+template <typename A>
+bool Transition<A>::operator>(Transition<A> cmp) const{
+    // Compare symbols. If equal, compare states value
+    return cmp.symbol==symbol? states[1]>cmp.states[1] : symbol>cmp.symbol;
+}
+
+template <typename A>
+bool Transition<A>::operator<(Transition<A> cmp) const{
+ return cmp.symbol==symbol? states[1]<cmp.states[1] : symbol<cmp.symbol;
+}
 
 #endif
