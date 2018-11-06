@@ -2,6 +2,7 @@
 #define TRANSITION_H
 
 #include "state.h"
+#include <iostream>
 
 template <typename A>
 class Transition {
@@ -46,7 +47,8 @@ int Transition<A>::getSymbol(){ return symbol; }
 template <typename A>
 bool Transition<A>::operator==(Transition<A> cmp){
   return states[0] == cmp.states[0] &&
-         states[1] == cmp.states[1];
+         states[1] == cmp.states[1] &&
+         symbol == cmp.symbol;
 }
 
 template <typename A>
