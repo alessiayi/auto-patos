@@ -19,6 +19,7 @@ class State {
 
         // Constructors and destructor
         State(S _name, int _type=0);
+        State(const State<A> &other);
         ~State();
 
         // Access methods
@@ -28,6 +29,16 @@ class State {
 
 template <typename A>
 State<A>::State(S _name, int _type) : name(_name), type(_type){};
+
+template <typename A>
+State<A>::State(const State<A> &other){
+    type = other.type;
+    name = other.name;
+    for (auto& thetransition : other.transitions){
+        transition* ptrans = new transition(thetransition->states[0], thetransition->states[1], thetransition->getSymbol());
+        transitions.push_back(ptrans);
+    }
+}
 
 template <typename A>
 State<A>::~State(){

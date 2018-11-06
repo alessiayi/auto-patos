@@ -50,6 +50,7 @@ class Automata{
 
     public:
         // Constructors and destructor
+        Automata(){};
         Automata(int size);
         Automata(int size, true_type);
         Automata(int size, false_type);
@@ -75,6 +76,9 @@ class Automata{
         void clearTypes();
 
         void setAlphabet(vector<Al> alpha);
+
+        // Overloads
+        self& operator=(const self& other);
 
         // Algorithms
         //TODO
@@ -120,6 +124,19 @@ automata::~Automata(){
 };
 
 template<>
+automata::self& automata::operator=(const self& other){
+    for (auto& thestate: other.states){
+        state* pstate = new state(*thestate.second);
+        states.insert(pair<S, state*> (thestate.first, pstate));
+    }
+    sizeOfAutomata[0] = other.sizeOfAutomata[0];
+    sizeOfAutomata[1] = other.sizeOfAutomata[1];
+    default_alphabet = other.default_alphabet;
+    alphabet = other.alphabet;
+    return *this;
+};
+
+template<>
 automata::TransitionIte automata::removeTransition(state* sinitial, state* sfinal, int symbol){
     automata::TransitionIte it;
     for (auto it_transition = sinitial->transitions.begin(); it_transition!=sinitial->transitions.end(); ++it_transition){
@@ -143,11 +160,7 @@ automata::Automata(int size) : Automata(size, is_arithmetic<S>{}){};
 template<>
 automata::Automata(const Automata &other) {
     // copy constructor
-    states = other.states;
-    sizeOfAutomata[0] = other.sizeOfAutomata[0];
-    sizeOfAutomata[1] = other.sizeOfAutomata[1];
-    default_alphabet = other.default_alphabet;
-    alphabet = other.alphabet;
+    *this = other;
 };
 
 
@@ -185,7 +198,7 @@ void automata::printDefaultAlphabet(){
                 }
         }
     }
-}
+};
 
 template<>
 void automata::printAnyAlphabet(){
@@ -198,10 +211,11 @@ void automata::printAnyAlphabet(){
             cout << thetransition->states[1]->getName() <<"  ";
         }
     }   
-}
+};
 
 template<>
 void automata::print(){
+    if (!sizeOfAutomata[0]) return; // empty
     if (default_alphabet) printDefaultAlphabet();
     else printAnyAlphabet();
      
@@ -263,6 +277,7 @@ bool automata::removeState(S state_name){
     delete to_remove;
     states.erase(state_name);
 
+
     --sizeOfAutomata[0];
     return true;
 };
@@ -305,6 +320,6 @@ template<>
 void automata::setAlphabet(vector<Al> alpha){
     copy(alpha.begin(), alpha.end(), inserter(alphabet, alphabet.end()));
     default_alphabet = false;
-}
+};
 
 #endif
