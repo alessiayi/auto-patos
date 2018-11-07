@@ -57,7 +57,7 @@ class Automata{
         Automata(){};
         Automata(int size);
         Automata(int size, true_type);
-        Automata(int size, false_type);
+        Automata(StateSeq somestates, bool inverse=false); // Automata from vector of states 
         Automata(const Automata &other); // copy constructor
         ~Automata();
 
@@ -145,6 +145,15 @@ automata::TransitionIte automata::removeTransition(state* sinitial, state* sfina
     return sinitial->transitions.end();
 };
 
+template<>
+bool automata::addState(S state_name){
+    if (states.find(state_name)!=states.end()) return false; // getName taken
+    state* newstate = new state(state_name);
+    states.insert(pair<S, state*> (state_name, newstate));
+    ++sizeOfAutomata[0];
+    return true;
+};
+
 
 /* 
 Implicit template specializations
@@ -152,6 +161,18 @@ Implicit template specializations
 
 template<>
 automata::Automata(int size) : Automata(size, is_arithmetic<S>{}){};
+
+template<>
+automata::Automata(StateSeq somestates, inverse){
+     // Automata from vector of states
+    int temp_type=0;
+    for (auto pairStates : somestates) {
+        if (pairStates.second->type==1)  temp_type=2;
+        else if (pairStates.second->type==2)  temp_type=1;
+        addState(pairStates.first, type);
+    }
+}
+
 
 template<>
 automata::Automata(const Automata &other) {
@@ -230,16 +251,7 @@ void automata::formalPrint(){
 template<>
 int* automata::size(){ return sizeOfAutomata; };
 
-
-template<>
-bool automata::addState(S state_name){
-    if (states.find(state_name)!=states.end()) return false; // getName taken
-    state* newstate = new state(state_name);
-    states.insert(pair<S, state*> (state_name, newstate));
-    ++sizeOfAutomata[0];
-    return true;
-};
-
+// addState() above
 
 template<>
 bool automata::addTransition(S sinitial, S sfinal, T symbol){
