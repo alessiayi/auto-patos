@@ -31,12 +31,15 @@ class Automata{
         typedef State<self> state;
         typedef Transition<self> transition;
         typedef map<S, state*> StateSeq;
+        typedef set<S> FinalStateSeq;
         typedef vector<transition*> TransitionSeq;
         typedef typename StateSeq::iterator StateIte;
         typedef typename TransitionSeq::iterator TransitionIte;
 
     private:
         StateSeq states; // Map: <key, value> = <state.name, *state>
+        FinalStateSeq finalStates;
+        S initialState=-1;
         int sizeOfAutomata[2] = {0,0}; // [0]: # states -  [1]: # transitions
         set<Al> alphabet = {0,1};
         bool default_alphabet=true;
@@ -59,6 +62,7 @@ class Automata{
 
         // Debugging methods
         void print();
+        void formalPrint();
 
         // Access methods
         int* size();
@@ -79,6 +83,9 @@ class Automata{
 
         // Overloads
         self& operator=(const self& other);
+
+        // Extras
+        bool validateAFD();
 
         // Algorithms
         //TODO
@@ -101,18 +108,6 @@ automata::Automata(int size, true_type) { // int, float, char
         states.insert(pair <S, state*> (i+65*(sizeof(S)==1), newstate));
     }
 };
-
-/*
-template<>
-automata::Automata(int size, false_type) { // string
-    sizeOfAutomata[0] = size;
-    state* newstate;
-    for (char i=0;i<size;++i){
-        newstate=new state(string(1, i+65));
-        states.insert(pair <S, state*> (string(1, i+65), newstate));
-    }
-};
-*/
 
 template<>
 automata::~Automata(){
@@ -222,6 +217,15 @@ void automata::print(){
 };
 
 template<>
+void automata::formalPrint(){
+    cout << sizeOfAutomata[0] <<" "<< initialState <<" "<< finalStates.size();
+    for (auto& thefinalstate : finalStates) cout <<" "<< thefinalstate;
+    for (auto& thestate : states) 
+        for (auto& thetrans : thestate.second->transitions)
+            cout << endl <<thetrans->states[0]->getName() <<" "<< thetrans->getSymbol()<<" "<<thetrans->states[1]->getName();
+}
+
+template<>
 int* automata::size(){ return sizeOfAutomata; };
 
 
@@ -292,28 +296,31 @@ bool automata::setStateType(S state_name, int new_type){
 
 template<>
 bool automata::makeInitial(S state_name){
-    if (states[state_name]->type==1) return false; // already initial state
     for (auto& thestate: states) if (thestate.second->type==1) { thestate.second->type=0; break; }
-    return setStateType(state_name, 1);
+    if (!setStateType(state_name, 1)) return false;
+    initialState = state_name;
+    return true;
 };
 
 template<>
 bool automata::makeFinal(S state_name){
-    if (states[state_name]->type==2) return false; // already final state
-    return setStateType(state_name, 2);
+    if (!setStateType(state_name, 2)) return false;
+    if (states[state_name]->type==1) initialState=-1;
+    finalStates.insert(state_name);
+    return true;
 };
 
 template<>
 bool automata::makeNormal(S state_name){
-    if (states[state_name]->type==0) return false; // already normal state
     return setStateType(state_name, 0);
 };
 
 template<>
 void automata::clearTypes(){
     for (auto& thestate: states) thestate.second->type=0;
+    initialState = -1;
+    finalStates.clear();
 };
-
 
 
 template<>
@@ -321,5 +328,11 @@ void automata::setAlphabet(vector<Al> alpha){
     copy(alpha.begin(), alpha.end(), inserter(alphabet, alphabet.end()));
     default_alphabet = false;
 };
+
+template<>
+bool automata::validateAFD(){
+    return sizeOfAutomata[1]==sizeOfAutomata[0]*alphabet.size() &&
+           initialState!=-1 && finalStates.size()>0;
+}
 
 #endif
