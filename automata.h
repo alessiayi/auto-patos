@@ -138,10 +138,10 @@ automata::TransitionIte automata::removeTransition(state* sinitial, state* sfina
         if ((*it_transition)->states[1]==sfinal && (*it_transition)->getSymbol()==symbol) {
             delete *it_transition; // TODO: delete after erase causes segmentation fault. Why?
             it = sinitial->transitions.erase(it_transition);
-            break;
+            return it;
         }
     }
-    return it;
+    return sinitial->transitions.end();
 };
 
 
@@ -165,7 +165,7 @@ bool automata::removeTransition(S sinitial_name, S sfinal_name, int symbol){
     state* sinitial = states[sinitial_name];
     state* sfinal = states[sfinal_name];
 
-    removeTransition(sinitial, sfinal, symbol);
+    if (!*removeTransition(sinitial, sfinal, symbol)) return false;
 
     --sizeOfAutomata[1];
     return true;
