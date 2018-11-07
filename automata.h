@@ -1,4 +1,5 @@
 // TODO: Solve error when using true_type and false_type constructors simultaneously
+// TODO: Allow a two-type state (initial and final)
 
 #ifndef AUTOMATA_H
 #define AUTOMATA_H
@@ -76,7 +77,7 @@ class Automata{
 
         bool makeInitial(S state_name);
         bool makeFinal(S state_name);
-        bool makeNormal(S state_name);
+        bool makeIntermediate(S state_name);
         void clearTypes();
 
         void setAlphabet(vector<Al> alpha);
@@ -177,7 +178,7 @@ template<>
 void automata::printDefaultAlphabet(){
     cout << "\n Alphabet |";
     for (auto& symbol: alphabet) cout << "\t"<< symbol << "\t" << "|";
-    cout<<"\n--------------------------------";
+    cout<<"\n----------|---------|---------|";
     for (auto& thestates : states){
         cout <<endl;
         if (thestates.second->type==1) cout << "->";
@@ -193,6 +194,7 @@ void automata::printDefaultAlphabet(){
                 }
         }
     }
+    cout << "\t|" ;
 };
 
 template<>
@@ -311,7 +313,7 @@ bool automata::makeFinal(S state_name){
 };
 
 template<>
-bool automata::makeNormal(S state_name){
+bool automata::makeIntermediate(S state_name){
     return setStateType(state_name, 0);
 };
 
