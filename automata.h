@@ -69,7 +69,7 @@ class Automata{
         int* size();
 
         // Modifiers
-        bool addState(S state_name);
+        bool addState(S state_name, int sometype=0);
         bool addTransition(S sinitial, S sfinal, T symbol);
 
         bool removeState(S state_name);
@@ -104,7 +104,7 @@ template<>
 automata::Automata(int size, true_type) { // int, float, char
     sizeOfAutomata[0] = size;
     state* newstate;
-    for (S i=0;i<size;++i){
+    for (S i=1;i<size;++i){
         newstate=new state(i+65*(sizeof(S)==1));
         states.insert(pair <S, state*> (i+65*(sizeof(S)==1), newstate));
     }
@@ -146,9 +146,9 @@ automata::TransitionIte automata::removeTransition(state* sinitial, state* sfina
 };
 
 template<>
-bool automata::addState(S state_name){
+bool automata::addState(S state_name, int sometype){
     if (states.find(state_name)!=states.end()) return false; // getName taken
-    state* newstate = new state(state_name);
+    state* newstate = new state(state_name, sometype);
     states.insert(pair<S, state*> (state_name, newstate));
     ++sizeOfAutomata[0];
     return true;
@@ -163,13 +163,16 @@ template<>
 automata::Automata(int size) : Automata(size, is_arithmetic<S>{}){};
 
 template<>
-automata::Automata(StateSeq somestates, inverse){
+automata::Automata(StateSeq somestates, bool inverse){
+    int temp_type;
      // Automata from vector of states
-    int temp_type=0;
-    for (auto pairStates : somestates) {
-        if (pairStates.second->type==1)  temp_type=2;
-        else if (pairStates.second->type==2)  temp_type=1;
-        addState(pairStates.first, type);
+    for (auto& pairStates : somestates) {
+        temp_type = 0;
+        if (inverse) {
+          if (pairStates.second->type==1) temp_type=2;
+          else if (pairStates.second->type==2)  temp_type=1;
+        }
+        addState(pairStates.first, temp_type);
     }
 }
 
@@ -208,11 +211,12 @@ void automata::printDefaultAlphabet(){
         cout<< "State " << thestates.first << " |";
         for (auto ittrans=thestates.second->transitions.begin(); ittrans!=thestates.second->transitions.end(); ++ittrans){
             cout <<" " <<(*ittrans)->states[1]->getName();
-            if (*next(ittrans, 1))
-                if ((*next(ittrans, 1))->getSymbol()!=(*ittrans)->getSymbol()){
-                    if (!(ittrans-thestates.second->transitions.begin())) cout<<"\t";
-                cout << "\t|" ;
-                }
+            if (next(ittrans, 1)!=thestates.second->transitions.end()){
+              if ((*next(ittrans, 1))->getSymbol()!=(*ittrans)->getSymbol()){
+                  if (!(ittrans-thestates.second->transitions.begin())) cout<<"\t";
+              cout << "\t|" ;
+              }
+            }
         }
     }
     cout << "\t|" ;
