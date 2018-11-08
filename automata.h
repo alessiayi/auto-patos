@@ -209,17 +209,18 @@ void automata::printDefaultAlphabet(){
         else if (thestates.second->type==2) cout << " *";
         else cout <<"  ";
         cout<< "State " << thestates.first << " |";
-        for (auto ittrans=thestates.second->transitions.begin(); ittrans!=thestates.second->transitions.end(); ++ittrans){
+        auto ittrans=thestates.second->transitions.begin();
+        while (! (ittrans==thestates.second->transitions.end() || (*ittrans)->getSymbol()!=0)){
             cout <<" " <<(*ittrans)->states[1]->getName();
-            if (next(ittrans, 1)!=thestates.second->transitions.end()){
-              if ((*next(ittrans, 1))->getSymbol()!=(*ittrans)->getSymbol()){
-                  if (!(ittrans-thestates.second->transitions.begin())) cout<<"\t";
-              cout << "\t|" ;
-              }
-            }
+            ++ittrans;
         }
+        cout << "\t|";
+        while (! (ittrans==thestates.second->transitions.end() || (*ittrans)->getSymbol()!=1)){
+            cout <<" " <<(*ittrans)->states[1]->getName();
+            ++ittrans;
+        }
+        cout << "\t|";
     }
-    cout << "\t|" ;
 };
 
 template<>
