@@ -46,7 +46,7 @@ class Automata{
         bool default_alphabet=true;
 
         // Auxiliary methods
-        void addTransition(transition sometransition);
+        void addTransition(transition sometransition, bool inverse=false);
         TransitionIte removeTransition(state* sinitial, state* sfinal, int symbol);
         bool setStateType(S state_name, int new_type);
         void printDefaultAlphabet();
@@ -89,7 +89,7 @@ class Automata{
         bool validateAFD();
 
         // Algorithms
-        //TODO
+        self transpuesto();
 };
 typedef Automata<Traits> automata;
 
@@ -281,8 +281,10 @@ bool automata::addTransition(S sinitial, S sfinal, T symbol){
 };
 
 template<>
-void automata::addTransition(transition sometransition){
-    addTransition(sometransition.states[0]->getName(), sometransition.states[1]->getName(), sometransition.getSymbol());
+void automata::addTransition(transition sometransition, bool inverse){
+    int a=0, b=1;
+    if (inverse) a=1, b=0;
+    addTransition(sometransition.states[a]->getName(), sometransition.states[b]->getName(), sometransition.getSymbol());
 };
 
 // removeTransition() above
@@ -352,5 +354,18 @@ bool automata::validateAFD(){
     return sizeOfAutomata[1]==sizeOfAutomata[0]*alphabet.size() &&
            initialState!=-1 && finalStates.size()>0;
 }
+
+template<>
+automata::self automata::transpuesto(){
+  self transpuesto(states, 1);
+  for (auto& thestate : states){
+    for (auto& thetransition : (thestate.second)->transitions){
+      transpuesto.addTransition(*thetransition, true);
+    }
+  }
+  return transpuesto;
+}
+
+
 
 #endif
