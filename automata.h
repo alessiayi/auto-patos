@@ -104,7 +104,7 @@ template<>
 automata::Automata(int size, true_type) { // int, float, char
     sizeOfAutomata[0] = size;
     state* newstate;
-    for (S i=1;i<size;++i){
+    for (S i=1;i<=size;++i){
         newstate=new state(i+65*(sizeof(S)==1));
         states.insert(pair <S, state*> (i+65*(sizeof(S)==1), newstate));
     }
