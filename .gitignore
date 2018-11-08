@@ -5,6 +5,7 @@
 
 # Test files
 test.cpp
+main.cpp
 
 # Others
 .DS_Store
