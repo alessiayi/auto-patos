@@ -10,6 +10,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <string>
 
 #include "state.h"
 #include "transition.h"
@@ -17,7 +18,7 @@
 using namespace std;
 
 struct Traits {
-    typedef int S;
+    typedef string S;
     typedef int T;
     typedef int Al; // Alphabet
 };
@@ -40,7 +41,7 @@ class Automata{
     private:
         StateSeq states; // Map: <key, value> = <state.name, *state>
         FinalStateSeq finalStates;
-        S initialState=-1;
+        S initialState="-";
         int sizeOfAutomata[2] = {0,0}; // [0]: # states -  [1]: # transitions
         set<Al> alphabet = {0,1};
         bool default_alphabet=true;
@@ -56,7 +57,6 @@ class Automata{
         // Constructors and destructor
         Automata(){};
         Automata(int size);
-        Automata(int size, true_type);
         Automata(StateSeq somestates, bool inverse=false); // Automata from vector of states
         Automata(const Automata &other); // copy constructor
         ~Automata();
@@ -102,12 +102,12 @@ Explicit template specializations
 
 
 template<>
-automata::Automata(int size, true_type) { // int, float, char
+automata::Automata(int size) {
     sizeOfAutomata[0] = size;
     state* newstate;
-    for (S i=1;i<=size;++i){
-        newstate=new state(i+65*(sizeof(S)==1));
-        states.insert(pair <S, state*> (i+65*(sizeof(S)==1), newstate));
+    for (int i=0;i<=size;++i){
+        newstate=new state(string(1, i+65));
+        states.insert(pair <S, state*> (string(1, i+65), newstate));
     }
 };
 
@@ -159,9 +159,6 @@ bool automata::addState(S state_name, int sometype){
 /*
 Implicit template specializations
 */
-
-template<>
-automata::Automata(int size) : Automata(size, is_arithmetic<S>{}){};
 
 template<>
 automata::Automata(StateSeq somestates, bool inverse){
@@ -327,7 +324,7 @@ bool automata::makeInitial(S state_name){
 template<>
 bool automata::makeFinal(S state_name){
     if (!setStateType(state_name, 2)) return false;
-    if (states[state_name]->type==1) initialState=-1;
+    if (states[state_name]->type==1) initialState="-";
     finalStates.insert(state_name);
     return true;
 };
@@ -340,7 +337,7 @@ bool automata::makeIntermediate(S state_name){
 template<>
 void automata::clearTypes(){
     for (auto& thestate: states) thestate.second->type=0;
-    initialState = -1;
+    initialState = "-";
     finalStates.clear();
 };
 
@@ -354,7 +351,7 @@ void automata::setAlphabet(vector<Al> alpha){
 template<>
 bool automata::validateAFD(){
     return sizeOfAutomata[1]==sizeOfAutomata[0]*alphabet.size() &&
-           initialState!=-1 && finalStates.size()>0;
+           initialState!="-" && finalStates.size()>0;
 }
 
 template<>
@@ -369,6 +366,7 @@ automata::self* automata::transpuesto(){
   return transpuesto;
 }
 
+/*
 template<>
 automata::self automata::AFNtoAFD(){
   self* transpuesto = this->transpuesto();
@@ -425,6 +423,6 @@ automata::self automata::AFNtoAFD(){
   }
 
 }
-
+*/
 
 #endif
