@@ -379,17 +379,39 @@ automata::self automata::AFNtoAFD(){
   AFD.addTransition(-1, -1, 1);
   for (auto& thestate : transpuesto->states){
     if ((thestate.second)->type==1 &&
-    find (AFD.StateSeq.begin(), AFD.StateSeq.end(), thestate.second) != AFD.StateSeq.end()){
-      AFD.addState(thestate.first);
+      AFD.states.find(thestate.first)==AFD.states.end()){
       bool aux1=false;
       bool aux0=false;
+      int type=0;
+      string superstate0;
+      string superstate1;
       for (auto& thetransition : (thestate.second)->transitions){
         if ((thetransition)->getSymbol()==1){
-          AFD.addTransition(thestate.first, ((thetransition)->states[1]).first, 1);
+          superstate1+=thetransition->states[1]->getName();
+          if (thetransition->states[1]->type()==2){
+            type=2;
+          }
+        }
+        if ((thetransition)->getSymbol()==0){
+          superstate0+=thetransition->states[1]->getName();
+          if (thetransition->states[1]->type()==2){
+            type=2;
+          }
+        }
+      }
+      if (AFD.states.find(superstate0)==AFD.states.end()){
+        AFD.addState(superstate0, type);
+      }
+      if (AFD.states.find(superstate1)==AFD.states.end()){
+        AFD.addState(superstate1, type);
+      }
+      for (auto& thetransition : (thestate.second)->transitions){
+        if ((thetransition)->getSymbol()==1){
+          AFD.addTransition(thestate.first, ((thetransition)->states[1]->getName()), 1);
           aux1=true;
         }
-        if ((thetransition)->getSymbol()==0)){
-          AFD.addTransition(thestate.first, ((thetransition)->states[1]).first, 0);
+        if ((thetransition)->getSymbol()==0){
+          AFD.addTransition(thestate.first, ((thetransition)->states[1]->getName()), 0);
           aux0=true;
         }
       }
@@ -403,7 +425,6 @@ automata::self automata::AFNtoAFD(){
   }
 
 }
-
 
 
 #endif
