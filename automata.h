@@ -57,7 +57,7 @@ class Automata{
         Automata(){};
         Automata(int size);
         Automata(int size, true_type);
-        Automata(StateSeq somestates, bool inverse=false); // Automata from vector of states 
+        Automata(StateSeq somestates, bool inverse=false); // Automata from vector of states
         Automata(const Automata &other); // copy constructor
         ~Automata();
 
@@ -90,12 +90,13 @@ class Automata{
 
         // Algorithms
         self* transpuesto();
+        self AFNtoAFD();
 };
 typedef Automata<Traits> automata;
 
 
-/* 
-Explicit template specializations 
+/*
+Explicit template specializations
 (explicits specialization must go before implicit)
 */
 
@@ -155,7 +156,7 @@ bool automata::addState(S state_name, int sometype){
 };
 
 
-/* 
+/*
 Implicit template specializations
 */
 
@@ -233,7 +234,7 @@ void automata::printAnyAlphabet(){
             cout << "["<< thetransition->getSymbol() << "]->";
             cout << thetransition->states[1]->getName() <<"  ";
         }
-    }   
+    }
 };
 
 template<>
@@ -241,14 +242,14 @@ void automata::print(){
     if (!sizeOfAutomata[0]) return; // empty
     if (default_alphabet) printDefaultAlphabet();
     else printAnyAlphabet();
-     
+
 };
 
 template<>
 void automata::formalPrint(){
     cout << sizeOfAutomata[0] <<" "<< initialState <<" "<< finalStates.size();
     for (auto& thefinalstate : finalStates) cout <<" "<< thefinalstate;
-    for (auto& thestate : states) 
+    for (auto& thestate : states)
         for (auto& thetrans : thestate.second->transitions)
             cout << endl <<thetrans->states[0]->getName() <<" "<< thetrans->getSymbol()<<" "<<thetrans->states[1]->getName();
 }
@@ -364,7 +365,43 @@ automata::self* automata::transpuesto(){
       transpuesto->addTransition(*thetransition, true);
     }
   }
+  transpuesto->print();
   return transpuesto;
+}
+
+template<>
+automata::self automata::AFNtoAFD(){
+  self* transpuesto = this->transpuesto();
+  self AFD;
+
+  AFD.addState(-1);
+  AFD.addTransition(-1, -1, 0);
+  AFD.addTransition(-1, -1, 1);
+  for (auto& thestate : transpuesto->states){
+    if ((thestate.second)->type==1 &&
+    find (AFD.StateSeq.begin(), AFD.StateSeq.end(), thestate.second) != AFD.StateSeq.end()){
+      AFD.addState(thestate.first);
+      bool aux1=false;
+      bool aux0=false;
+      for (auto& thetransition : (thestate.second)->transitions){
+        if ((thetransition)->getSymbol()==1){
+          AFD.addTransition(thestate.first, ((thetransition)->states[1]).first, 1);
+          aux1=true;
+        }
+        if ((thetransition)->getSymbol()==0)){
+          AFD.addTransition(thestate.first, ((thetransition)->states[1]).first, 0);
+          aux0=true;
+        }
+      }
+      if (aux1==false){
+        AFD.addTransition(thestate.first, -1, 1);
+      }
+      if (aux0==false){
+        AFD.addTransition(thestate.first, -1, 0);
+      }
+    }
+  }
+
 }
 
 
