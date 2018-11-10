@@ -89,7 +89,7 @@ class Automata{
         bool validateAFD();
 
         // Algorithms
-        self transpuesto();
+        self* transpuesto();
 };
 typedef Automata<Traits> automata;
 
@@ -357,11 +357,11 @@ bool automata::validateAFD(){
 }
 
 template<>
-automata::self automata::transpuesto(){
-  self transpuesto(states, 1);
+automata::self* automata::transpuesto(){
+  self* transpuesto = new self(states, 1);
   for (auto& thestate : states){
     for (auto& thetransition : (thestate.second)->transitions){
-      transpuesto.addTransition(*thetransition, true);
+      transpuesto->addTransition(*thetransition, true);
     }
   }
   return transpuesto;
