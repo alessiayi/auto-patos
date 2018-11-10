@@ -1,5 +1,4 @@
 // TODO: Solve error when using true_type and false_type constructors simultaneously
-// TODO: Allow a two-type state (initial and final)
 
 #ifndef AUTOMATA_H
 #define AUTOMATA_H
@@ -69,7 +68,7 @@ class Automata{
         int* size();
 
         // Modifiers
-        bool addState(S state_name, int sometype=0);
+        bool addState(S state_name, bool isInitial=false, bool isFinal=false);
         bool addTransition(S sinitial, S sfinal, T symbol);
 
         bool removeState(S state_name);
@@ -147,9 +146,9 @@ automata::TransitionIte automata::removeTransition(state* sinitial, state* sfina
 };
 
 template<>
-bool automata::addState(S state_name, int sometype){
+bool automata::addState(S state_name, bool isInitial, bool isFinal){
     if (states.find(state_name)!=states.end()) return false; // getName taken
-    state* newstate = new state(state_name, sometype);
+    state* newstate = new state(state_name, isInitial, isFinal);
     states.insert(pair<S, state*> (state_name, newstate));
     ++sizeOfAutomata[0];
     return true;
@@ -162,15 +161,17 @@ Implicit template specializations
 
 template<>
 automata::Automata(StateSeq somestates, bool inverse){
-    int temp_type;
      // Automata from vector of states
     for (auto& pairStates : somestates) {
-        temp_type = 0;
+        bool temp_initial=false, temp_final=false;
         if (inverse) {
-          if (pairStates.second->type==1) temp_type=2;
-          else if (pairStates.second->type==2)  temp_type=1;
+            if (pairStates.second->isInitial){
+                temp_final=true;
+                finalStates.insert(pairStates.first);
+            }
+            if (pairStates.second->isFinal) temp_initial=true;
         }
-        addState(pairStates.first, temp_type);
+        addState(pairStates.first, temp_initial, temp_final);
     }
 }
 
@@ -203,9 +204,11 @@ void automata::printDefaultAlphabet(){
     cout<<"\n----------|---------|---------|";
     for (auto& thestates : states){
         cout <<endl;
-        if (thestates.second->type==1) cout << "->";
-        else if (thestates.second->type==2) cout << " *";
-        else cout <<"  ";
+        if (thestates.second->isFinal) cout << "*";
+        else cout << " ";
+        if (thestates.second->isInitial) cout << "->";
+        else cout << "  ";
+
         cout<< "State " << thestates.first << " |";
         auto ittrans=thestates.second->transitions.begin();
         while (! (ittrans==thestates.second->transitions.end() || (*ittrans)->getSymbol()!=0)){
@@ -308,35 +311,42 @@ bool automata::removeState(S state_name){
 template<>
 bool automata::setStateType(S state_name, int new_type){
     if (states.find(state_name)==states.end() || // not found
-        states[state_name]->type == new_type) return false; // already set
-    states[state_name]->type = new_type;
+        (states[state_name]->isInitial && new_type==1) ||
+        (states[state_name]->isFinal && new_type==2)) return false; // already set
+    switch (new_type){
+        case 0: states[state_name]->isInitial=false; states[state_name]->isFinal=false; break;
+        case 1: states[state_name]->isInitial=true; break;
+        case 2: states[state_name]->isFinal=true;
+    }
     return true;
 };
 
 template<>
 bool automata::makeInitial(S state_name){
-    for (auto& thestate: states) if (thestate.second->type==1) { thestate.second->type=0; break; }
+    for (auto& thestate: states)
+        if (thestate.second->isInitial==true) { thestate.second->isInitial=false; break; }
+
     if (!setStateType(state_name, 1)) return false;
-    initialState = state_name;
     return true;
 };
 
 template<>
 bool automata::makeFinal(S state_name){
     if (!setStateType(state_name, 2)) return false;
-    if (states[state_name]->type==1) initialState="-";
     finalStates.insert(state_name);
     return true;
 };
 
 template<>
 bool automata::makeIntermediate(S state_name){
+    if (states[state_name]->isInitial) initialState="-";
+    if (states[state_name]->isFinal) finalStates.erase(state_name);
     return setStateType(state_name, 0);
 };
 
 template<>
 void automata::clearTypes(){
-    for (auto& thestate: states) thestate.second->type=0;
+    for (auto& thestate: states) thestate.second->isFinal=thestate.second->isInitial=false;
     initialState = "-";
     finalStates.clear();
 };
