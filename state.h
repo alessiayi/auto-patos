@@ -13,12 +13,11 @@ class State {
         S name;
     public:
         TransitionSeq transitions;
-        int type=0; // 0: normal state
-                    // 1: initial state
-                    // 2: final state
+        bool isInitial=false;
+        bool isFinal=false;
 
         // Constructors and destructor
-        State(S _name, int _type=0);
+        State(S _name, bool isInitial=false, bool isFinal=false);
         State(const State<A> &other);
         ~State();
 
@@ -28,11 +27,11 @@ class State {
 };
 
 template <typename A>
-State<A>::State(S _name, int _type) : name(_name), type(_type){};
+State<A>::State(S _name, bool _isInit, bool _isFin) 
+: name(_name), isInitial(_isInit), isFinal(_isFin){};
 
 template <typename A>
 State<A>::State(const State<A> &other){
-    type = other.type;
     name = other.name;
     for (auto& thetransition : other.transitions){
         transition* ptrans = new transition(thetransition->states[0], thetransition->states[1], thetransition->getSymbol());

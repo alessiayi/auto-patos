@@ -1,5 +1,4 @@
 // TODO: Solve error when using true_type and false_type constructors simultaneously
-// TODO: Allow a two-type state (initial and final)
 
 #ifndef AUTOMATA_H
 #define AUTOMATA_H
@@ -10,6 +9,8 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <string>
+#include <stack>
 
 #include "state.h"
 #include "transition.h"
@@ -17,7 +18,7 @@
 using namespace std;
 
 struct Traits {
-    typedef int S;
+    typedef string S;
     typedef int T;
     typedef int Al; // Alphabet
 };
@@ -40,7 +41,7 @@ class Automata{
     private:
         StateSeq states; // Map: <key, value> = <state.name, *state>
         FinalStateSeq finalStates;
-        S initialState=-1;
+        S initialState="-";
         int sizeOfAutomata[2] = {0,0}; // [0]: # states -  [1]: # transitions
         set<Al> alphabet = {0,1};
         bool default_alphabet=true;
@@ -56,9 +57,9 @@ class Automata{
         // Constructors and destructor
         Automata(){};
         Automata(int size);
-        Automata(int size, true_type);
-        Automata(StateSeq somestates, bool inverse=false); // Automata from vector of states 
+        Automata(StateSeq somestates, bool inverse=false); // Automata from vector of states
         Automata(const Automata &other); // copy constructor
+        void Input();
         ~Automata();
 
         // Debugging methods
@@ -69,7 +70,7 @@ class Automata{
         int* size();
 
         // Modifiers
-        bool addState(S state_name, int sometype=0);
+        bool addState(S state_name, bool isInitial=false, bool isFinal=false);
         bool addTransition(S sinitial, S sfinal, T symbol);
 
         bool removeState(S state_name);
@@ -90,23 +91,25 @@ class Automata{
 
         // Algorithms
         self* transpuesto();
+        self AFNtoAFD();
+        void Brzozowski();
 };
 typedef Automata<Traits> automata;
 
 
-/* 
-Explicit template specializations 
+/*
+Explicit template specializations
 (explicits specialization must go before implicit)
 */
 
 
 template<>
-automata::Automata(int size, true_type) { // int, float, char
+automata::Automata(int size) {
     sizeOfAutomata[0] = size;
     state* newstate;
-    for (S i=1;i<=size;++i){
-        newstate=new state(i+65*(sizeof(S)==1));
-        states.insert(pair <S, state*> (i+65*(sizeof(S)==1), newstate));
+    for (int i=0;i<size;++i){
+        newstate=new state(string(1, i+65));
+        states.insert(pair <S, state*> (string(1, i+65), newstate));
     }
 };
 
@@ -146,33 +149,32 @@ automata::TransitionIte automata::removeTransition(state* sinitial, state* sfina
 };
 
 template<>
-bool automata::addState(S state_name, int sometype){
+bool automata::addState(S state_name, bool isInitial, bool isFinal){
     if (states.find(state_name)!=states.end()) return false; // getName taken
-    state* newstate = new state(state_name, sometype);
+    state* newstate = new state(state_name, isInitial, isFinal);
     states.insert(pair<S, state*> (state_name, newstate));
     ++sizeOfAutomata[0];
     return true;
 };
 
 
-/* 
+/*
 Implicit template specializations
 */
 
 template<>
-automata::Automata(int size) : Automata(size, is_arithmetic<S>{}){};
-
-template<>
 automata::Automata(StateSeq somestates, bool inverse){
-    int temp_type;
      // Automata from vector of states
     for (auto& pairStates : somestates) {
-        temp_type = 0;
+        bool temp_initial=false, temp_final=false;
         if (inverse) {
-          if (pairStates.second->type==1) temp_type=2;
-          else if (pairStates.second->type==2)  temp_type=1;
+            if (pairStates.second->isInitial){
+                temp_final=true;
+                finalStates.insert(pairStates.first);
+            }
+            if (pairStates.second->isFinal) temp_initial=true;
         }
-        addState(pairStates.first, temp_type);
+        addState(pairStates.first, temp_initial, temp_final);
     }
 }
 
@@ -205,9 +207,11 @@ void automata::printDefaultAlphabet(){
     cout<<"\n----------|---------|---------|";
     for (auto& thestates : states){
         cout <<endl;
-        if (thestates.second->type==1) cout << "->";
-        else if (thestates.second->type==2) cout << " *";
-        else cout <<"  ";
+        if (thestates.second->isFinal) cout << "*";
+        else cout << " ";
+        if (thestates.second->isInitial) cout << "->";
+        else cout << "  ";
+
         cout<< "State " << thestates.first << " |";
         auto ittrans=thestates.second->transitions.begin();
         while (! (ittrans==thestates.second->transitions.end() || (*ittrans)->getSymbol()!=0)){
@@ -233,7 +237,7 @@ void automata::printAnyAlphabet(){
             cout << "["<< thetransition->getSymbol() << "]->";
             cout << thetransition->states[1]->getName() <<"  ";
         }
-    }   
+    }
 };
 
 template<>
@@ -241,14 +245,14 @@ void automata::print(){
     if (!sizeOfAutomata[0]) return; // empty
     if (default_alphabet) printDefaultAlphabet();
     else printAnyAlphabet();
-     
+
 };
 
 template<>
 void automata::formalPrint(){
     cout << sizeOfAutomata[0] <<" "<< initialState <<" "<< finalStates.size();
     for (auto& thefinalstate : finalStates) cout <<" "<< thefinalstate;
-    for (auto& thestate : states) 
+    for (auto& thestate : states)
         for (auto& thetrans : thestate.second->transitions)
             cout << endl <<thetrans->states[0]->getName() <<" "<< thetrans->getSymbol()<<" "<<thetrans->states[1]->getName();
 }
@@ -310,36 +314,43 @@ bool automata::removeState(S state_name){
 template<>
 bool automata::setStateType(S state_name, int new_type){
     if (states.find(state_name)==states.end() || // not found
-        states[state_name]->type == new_type) return false; // already set
-    states[state_name]->type = new_type;
+        (states[state_name]->isInitial && new_type==1) ||
+        (states[state_name]->isFinal && new_type==2)) return false; // already set
+    switch (new_type){
+        case 0: states[state_name]->isInitial=false; states[state_name]->isFinal=false; break;
+        case 1: states[state_name]->isInitial=true; break;
+        case 2: states[state_name]->isFinal=true;
+    }
     return true;
 };
 
 template<>
 bool automata::makeInitial(S state_name){
-    for (auto& thestate: states) if (thestate.second->type==1) { thestate.second->type=0; break; }
+    for (auto& thestate: states)
+        if (thestate.second->isInitial==true) { thestate.second->isInitial=false; break; }
+
     if (!setStateType(state_name, 1)) return false;
-    initialState = state_name;
     return true;
 };
 
 template<>
 bool automata::makeFinal(S state_name){
     if (!setStateType(state_name, 2)) return false;
-    if (states[state_name]->type==1) initialState=-1;
     finalStates.insert(state_name);
     return true;
 };
 
 template<>
 bool automata::makeIntermediate(S state_name){
+    if (states[state_name]->isInitial) initialState="-";
+    if (states[state_name]->isFinal) finalStates.erase(state_name);
     return setStateType(state_name, 0);
 };
 
 template<>
 void automata::clearTypes(){
-    for (auto& thestate: states) thestate.second->type=0;
-    initialState = -1;
+    for (auto& thestate: states) thestate.second->isFinal=thestate.second->isInitial=false;
+    initialState = "-";
     finalStates.clear();
 };
 
@@ -353,7 +364,7 @@ void automata::setAlphabet(vector<Al> alpha){
 template<>
 bool automata::validateAFD(){
     return sizeOfAutomata[1]==sizeOfAutomata[0]*alphabet.size() &&
-           initialState!=-1 && finalStates.size()>0;
+           initialState!="-" && finalStates.size()>0;
 }
 
 template<>
@@ -364,9 +375,130 @@ automata::self* automata::transpuesto(){
       transpuesto->addTransition(*thetransition, true);
     }
   }
+  transpuesto->print();
   return transpuesto;
 }
 
+template<>
+automata::self automata::AFNtoAFD(){
+  self* transpuesto = this->transpuesto();
+  self AFD;
+
+  AFD.addState("-");
+  AFD.addTransition("-", "-", 0);
+  AFD.addTransition("-", "-", 1);
+  vector<string> list;
+  for (auto& thestate : transpuesto->states){
+    if ((thestate.second)->isInitial==true && AFD.states.find(thestate.first)==AFD.states.end()){
+
+      string superstate0=thestate.first;
+      string superstate1=thestate.first;
+      bool existe0=true;
+      bool existe1=true;
+      int count=0;
+
+      AFD.addState(thestate.first, true);
+      list.push_back(thestate.first);
+      while (!list.empty()){
+        count++;
+        bool aux1=false;
+        bool aux0=false;
+        bool fin0=false;
+        bool fin1=false;
+        existe0=false;
+        existe1=false;
+        superstate0.clear();
+        superstate1.clear();
+
+        string top=list.front();
+
+        for (int i=0; i<top.length(); i++){
+          for (auto& thestate2 : transpuesto->states){
+            char aaa=top[i];
+            string letraa(1,aaa);
+            if (letraa==thestate2.first){
+              for (auto& thetransition : (thestate2.second)->transitions){
+                if ((thetransition)->getSymbol()==1){
+                  superstate1+=thetransition->states[1]->getName();
+                  existe1=true;
+                  if (thetransition->states[1]->isFinal){
+                    fin1=true;
+                  }
+                }
+                if ((thetransition)->getSymbol()==0){
+                  superstate0+=thetransition->states[1]->getName();
+                  existe0=true;
+                  if (thetransition->states[1]->isFinal){
+                    fin0=true;
+                  }
+                }
+              }
+            }
+          }
+        }
+        sort(superstate0.begin(),superstate0.end());
+        sort(superstate1.begin(),superstate1.end());
+        if (AFD.states.find(superstate0)==AFD.states.end() && existe0){
+          AFD.addState(superstate0, false, fin0);
+          list.push_back(superstate0);
+        }
+        if (AFD.states.find(superstate1)==AFD.states.end() && existe1){
+          AFD.addState(superstate1, false, fin1);
+          list.push_back(superstate1);
+        }
+        if (existe0){
+          AFD.addTransition(list.front(), superstate0, 0);
+        }
+        else{
+          AFD.addTransition(list.front(), "-", 0);
+        }
+        if (existe1){
+          AFD.addTransition(list.front(), superstate1, 1);
+        }
+        else{
+          AFD.addTransition(list.front(), "-", 1);
+        }
+        list.erase(list.begin());
+      }
+    }
+  }
+  AFD.print();
+  return AFD;
+}
+
+template<>
+void automata::Brzozowski(){
+  transpuesto();
+  AFNtoAFD();
+  transpuesto();
+  AFNtoAFD();
+}
+
+automata Input(){
+    int cant;
+    string inicial;
+    int cantfinales;
+    string estadoinit;
+    string estadofin;
+    int simbolo;
+    string unfinal;
+
+    cin >> cant >> inicial >> cantfinales;
+
+    automata theAutomata(cant);
+    theAutomata.makeInitial(inicial);
+
+    for (int i=0; i<cantfinales; ++i){
+        cin >> unfinal;
+        theAutomata.makeFinal(unfinal);
+    }
+
+    for (int i=0; i<(cant*2); i++){ //AFD solo hay ntransitions=2*estados
+        cin >> estadoinit >> simbolo >> estadofin;
+        theAutomata.addTransition(estadoinit, estadofin, simbolo);
+    }
+    return theAutomata;
+}
 
 
 #endif
