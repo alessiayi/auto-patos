@@ -10,6 +10,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <stack>
 
 #include "state.h"
 #include "transition.h"
@@ -90,6 +91,7 @@ class Automata{
         // Algorithms
         self* transpuesto();
         self AFNtoAFD();
+        void Brzozowski();
 };
 typedef Automata<Traits> automata;
 
@@ -376,63 +378,140 @@ automata::self* automata::transpuesto(){
   return transpuesto;
 }
 
-/*
 template<>
 automata::self automata::AFNtoAFD(){
   self* transpuesto = this->transpuesto();
   self AFD;
 
-  AFD.addState(-1);
-  AFD.addTransition(-1, -1, 0);
-  AFD.addTransition(-1, -1, 1);
+  AFD.addState("-");
+  AFD.addTransition("-", "-", 0);
+  AFD.addTransition("-", "-", 1);
+  vector<string> list;
   for (auto& thestate : transpuesto->states){
-    if ((thestate.second)->type==1 &&
-      AFD.states.find(thestate.first)==AFD.states.end()){
-      bool aux1=false;
-      bool aux0=false;
-      int type=0;
-      string superstate0;
-      string superstate1;
-      for (auto& thetransition : (thestate.second)->transitions){
-        if ((thetransition)->getSymbol()==1){
-          superstate1+=thetransition->states[1]->getName();
-          if (thetransition->states[1]->type()==2){
-            type=2;
+    if ((thestate.second)->isInitial==true && AFD.states.find(thestate.first)==AFD.states.end()){
+
+      string superstate0=thestate.first;
+      string superstate1=thestate.first;
+      bool existe0=true;
+      bool existe1=true;
+      int count=0;
+
+      AFD.addState(thestate.first, true);
+      list.push_back(thestate.first);
+      while (!list.empty()){
+        count++;
+        bool aux1=false;
+        bool aux0=false;
+        bool fin0=false;
+        bool fin1=false;
+        existe0=false;
+        existe1=false;
+        superstate0.clear();
+        superstate1.clear();
+
+        string top=list.front();
+
+        for (int i=0; i<top.length(); i++){
+          for (auto& thestate2 : transpuesto->states){
+            char aaa=top[i];
+            string letraa(1,aaa);
+            if (letraa==thestate2.first){
+              for (auto& thetransition : (thestate2.second)->transitions){
+                if ((thetransition)->getSymbol()==1){
+                  superstate1+=thetransition->states[1]->getName();
+                  existe1=true;
+                  if (thetransition->states[1]->isFinal){
+                    fin1=true;
+                  }
+                }
+                if ((thetransition)->getSymbol()==0){
+                  superstate0+=thetransition->states[1]->getName();
+                  existe0=true;
+                  if (thetransition->states[1]->isFinal){
+                    fin0=true;
+                  }
+                }
+              }
+            }
           }
         }
-        if ((thetransition)->getSymbol()==0){
-          superstate0+=thetransition->states[1]->getName();
-          if (thetransition->states[1]->type()==2){
-            type=2;
-          }
+        cout  << "Count " << count << ": " << superstate0 << "  " <<  superstate1 <<endl;
+        sort(superstate0.begin(),superstate0.end());
+        sort(superstate1.begin(),superstate1.end());
+        if (AFD.states.find(superstate0)==AFD.states.end() && existe0){
+          AFD.addState(superstate0, false, fin0);
+          list.push_back(superstate0);
         }
-      }
-      if (AFD.states.find(superstate0)==AFD.states.end()){
-        AFD.addState(superstate0, type);
-      }
-      if (AFD.states.find(superstate1)==AFD.states.end()){
-        AFD.addState(superstate1, type);
-      }
-      for (auto& thetransition : (thestate.second)->transitions){
-        if ((thetransition)->getSymbol()==1){
-          AFD.addTransition(thestate.first, ((thetransition)->states[1]->getName()), 1);
-          aux1=true;
+        if (AFD.states.find(superstate1)==AFD.states.end() && existe1){
+          AFD.addState(superstate1, false, fin1);
+          list.push_back(superstate1);
         }
-        if ((thetransition)->getSymbol()==0){
-          AFD.addTransition(thestate.first, ((thetransition)->states[1]->getName()), 0);
-          aux0=true;
+        if (existe0){
+          AFD.addTransition(list.front(), superstate0, 0);
         }
+        else{
+          AFD.addTransition(list.front(), "-", 0);
+        }
+        if (existe1){
+          AFD.addTransition(list.front(), superstate1, 1);
+        }
+        else{
+          AFD.addTransition(list.front(), "-", 1);
+        }
+        list.erase(list.begin());
       }
-      if (aux1==false){
-        AFD.addTransition(thestate.first, -1, 1);
-      }
-      if (aux0==false){
-        AFD.addTransition(thestate.first, -1, 0);
-      }
+
+
+
+    //   for (auto& thetransition : (thestate.second)->transitions){
+    //     cout <<"Saaaa ";
+    //     cout << thestate.first << (thetransition)->getSymbol();
+    //     if ((thetransition)->getSymbol()==1){
+    //       superstate11+=(thetransition)->states[1]->getName();
+    //       cout <<"SOO";
+    //       cout<< superstate1;
+    //       cout <<"SÏ";
+    //       aux1=true;
+    //       cout << " AUX1 " << aux1;
+    //     }
+    //     if ((thetransition)->getSymbol()==0){
+    //       superstate00+=(thetransition)->states[1]->getName();
+    //       cout <<"SOO";
+    //       cout<< superstate0;
+    //       cout << " = " << ((thetransition)->states[1]->getName());
+    //       cout << "cuac";
+    //       aux0=true;
+    //     }
+    //   }
+    //   if  (aux0){
+    //     AFD.addTransition(superstate0, superstate00, 0);
+    //   }
+    //   if (aux1){
+    //     cout << "POIUYTRE";
+    //     AFD.addTransition(superstate1, superstate11, 1);
+    //   }
+    //   cout << endl << aux0 << "|" << aux1;
+    //   if (aux1==false){
+    //     cout << "POSIENTRA";
+    //     AFD.addTransition(superstate1, "-", 1);
+    //   }
+    //   if (aux0==false){
+    //     AFD.addTransition(superstate0, "-", 0);
+    //   }
+    //}
     }
   }
-
+  AFD.print();
+  return AFD;
 }
-*/
+
+template<>
+void automata::Brzozowski(){
+  transpuesto();
+  AFNtoAFD();
+  transpuesto();
+  AFNtoAFD();
+}
+
 
 #endif
