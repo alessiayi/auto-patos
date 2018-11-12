@@ -474,34 +474,30 @@ void automata::Brzozowski(){
   AFNtoAFD();
 }
 
-template<>
-void automata::Input(){//lo deje en funcion pq me dioern erroresde explicit specificacion y preferi que porlomenos corra
-  int cant;
-  string inicial;
-  int cantfinales;
-  string estadoinit;
-  string estadofin;
-  int simbolo;
-  string unfinal;
-  cin >> cant >> inicial >> cantfinales;
+automata Input(){
+    int cant;
+    string inicial;
+    int cantfinales;
+    string estadoinit;
+    string estadofin;
+    int simbolo;
+    string unfinal;
 
-  sizeOfAutomata[0] = cant;
-  state* newstate;
-  for (int i=0;i<cant;++i){
-      newstate=new state(string(1, i+65));
-      states.insert(pair <S, state*> (string(1, i+65), newstate));
-  }
-  makeInitial(inicial);
+    cin >> cant >> inicial >> cantfinales;
 
-  for (int i=0; i<cantfinales; ++i){
-    cin >> unfinal;
-    makeFinal(unfinal);
-  }
+    automata theAutomata(cant);
+    theAutomata.makeInitial(inicial);
 
-  for (int i=0; i<(cant*2); i++){//AFD solo hay ntransitions=2*estados
-    cin >> estadoinit >> simbolo >> estadofin;
-    addTransition(estadoinit, estadofin, simbolo);
-  }
+    for (int i=0; i<cantfinales; ++i){
+        cin >> unfinal;
+        theAutomata.makeFinal(unfinal);
+    }
+
+    for (int i=0; i<(cant*2); i++){ //AFD solo hay ntransitions=2*estados
+        cin >> estadoinit >> simbolo >> estadofin;
+        theAutomata.addTransition(estadoinit, estadofin, simbolo);
+    }
+    return theAutomata;
 }
 
 
