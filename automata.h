@@ -7,6 +7,7 @@
 #include <iomanip>
 
 #include <utility> // pair
+#include <algorithm> // minmax
 #include <vector>
 #include <map>
 #include <set>
@@ -46,6 +47,44 @@ class Automata{
         set<Al> alphabet = {0,1};
         bool default_alphabet=true;
 
+        struct StatesCoord{
+            state* stateX;
+            state* stateY;
+            int r;
+            int c;
+            set<StatesCoord> dependencies;
+
+            StatesCoord(state* stx, state* sty, int _r=0, int _c=0){
+                if (stx->getName() > sty->getName()) { stateX=stx; stateY=sty; }
+                else { stateX=sty; stateY=stx; }
+               
+                r = max(_r, _c);
+                c = min(_r, _c);
+            }
+
+            void addToDependencies(StatesCoord &dependency){
+                dependencies.insert(dependency);
+            }
+
+            bool operator==(StatesCoord& cmp){
+              return (stateX == cmp.stateX && stateY == cmp.stateY) ||
+                     (stateX == cmp.stateY && stateY == cmp.stateX);
+            }
+
+            bool operator==(pair<S, S>& cmp){
+              return (stateX->getName() == cmp.first && stateY->getName() == cmp.second) ||
+                     (stateX->getName() == cmp.second && stateY->getName() == cmp.first);
+            }
+
+            bool operator>(StatesCoord cmp) const{
+                return (r+c)>(cmp.r+cmp.c);
+            }
+            bool operator<(StatesCoord cmp) const{
+                return (r+c)<(cmp.r+cmp.c);
+            }
+
+        };
+
         // Auxiliary methods
         void copyIdentityMatrix(vector<vector<bool>> &M);
 
@@ -56,9 +95,13 @@ class Automata{
 
         void printDefaultAlphabet();
         void printAnyAlphabet();
-        void printMatrix(vector<vector<bool>> &M);
+
+        void uncheckCell(vector<vector<bool>>& M, StatesCoord touncheck, map<pair<S, S>,StatesCoord*> mapofcoordinates);
+        
         
     public:
+        void printMatrix(vector<vector<bool>> M);
+
         // Constructors and destructor
         Automata(){};
         Automata(int size);
@@ -97,15 +140,15 @@ class Automata{
         // Algorithms
         self* transpuesto();
         vector<vector<bool>> equivalenceN4();
-
+        vector<vector<bool>> equivalenceN2();
 };
 typedef Automata<Traits> automata;
-
 
 /* 
 Explicit template specializations 
 (explicits specialization must go before implicit)
 */
+
 
 
 template<>
@@ -385,16 +428,17 @@ automata::self* automata::transpuesto(){
 }
 
 template<>
-void automata::printMatrix(vector<vector<bool>> &M){
-    // print
-    cout <<"\n ";
+void automata::printMatrix(vector<vector<bool>> M){
+    cout <<"\n\n ";
     for (auto& thestate: states) { cout << " " <<thestate.first; }
     auto itstates = states.begin();
     cout <<endl;
     for (int r=0; r<sizeOfAutomata[0]; ++r){
         cout << (*itstates).first;
         for (int c=0; c<sizeOfAutomata[0]; ++c){
-            cout << " " << M[r][c];
+            cout << M[r][c] << " ";
+            // if (!M[r][c]) cout <<" x";
+            // else cout << " -";
         }
         cout <<endl;
         ++itstates;
@@ -455,5 +499,68 @@ vector<vector<bool>> automata::equivalenceN4(){
 
     return M;
 }
+
+template<>
+void automata::uncheckCell(vector<vector<bool>>& M, StatesCoord touncheck, map<pair<S, S>,StatesCoord*> mapofcoordinates){
+    // if (!M[touncheck.r][touncheck.c]) return; // already unchecked
+    M[touncheck.r][touncheck.c] = 0;
+    for ( auto& thedependency : (*mapofcoordinates[make_pair(touncheck.stateX->getName(), touncheck.stateY->getName())]).dependencies ){
+        if (M[thedependency.r][thedependency.c]){ // if checked, uncheck
+            uncheckCell(M, thedependency, mapofcoordinates);
+        }
+    }
+}
+
+template<>
+vector<vector<bool>> automata::equivalenceN2(){
+    // Initialize matrix and ids in states
+    vector<vector<bool>> M(sizeOfAutomata[0], vector<bool>(sizeOfAutomata[0],1));
+    map<S, int> state_to_id;
+    map<int, S> id_to_state;
+    int c=0;
+    for (auto& thestate: states) {
+        state_to_id.insert( make_pair(thestate.first, c) ); 
+        id_to_state.insert( make_pair(c, thestate.first) ); 
+        ++c;
+    }
+
+    // Create coordinates
+    map<pair<S, S>,StatesCoord*> mapofcoordinates;
+    for (int r=0; r<sizeOfAutomata[0] ; ++r){
+        for (int c=0; c<r; ++c){
+            StatesCoord* temp = new StatesCoord(states[id_to_state[r]], states[id_to_state[c]], r, c);
+            mapofcoordinates.insert(make_pair( make_pair(id_to_state[r], id_to_state[c]), temp ) );
+        }
+    }
+
+    // Add dependencies
+    for (auto& thecoord : mapofcoordinates){
+        for (int i=0; i<alphabet.size(); ++i){ // 0 1
+            S rnext = thecoord.second->stateX->transitions[i]->states[1]->getName();
+            S cnext = thecoord.second->stateY->transitions[i]->states[1]->getName();
+            if (rnext!=cnext){
+                auto* pcoord = mapofcoordinates[make_pair(max(rnext, cnext), min(rnext, cnext))];
+                pcoord->addToDependencies(*thecoord.second);
+            }
+        }
+    }
+
+    // Fill cells recursively with at least one final state
+    for (int r=0; r<sizeOfAutomata[0] ; ++r){
+        for (int c=0; c<r; ++c){
+            if (finalStates.find(id_to_state[c])!=finalStates.end() ||
+                finalStates.find(id_to_state[r])!=finalStates.end()){
+                auto temp = StatesCoord(states[id_to_state[r]], states[id_to_state[c]], r, c);
+                uncheckCell(M, *mapofcoordinates[make_pair(id_to_state[r], id_to_state[c])] , mapofcoordinates);
+            }
+        }
+    }
+
+    copyIdentityMatrix(M);
+
+    return M;
+}
+
+
 
 #endif
