@@ -435,7 +435,6 @@ automata::self automata::AFNtoAFD(){
             }
           }
         }
-        cout  << "Count " << count << ": " << superstate0 << "  " <<  superstate1 <<endl;
         sort(superstate0.begin(),superstate0.end());
         sort(superstate1.begin(),superstate1.end());
         if (AFD.states.find(superstate0)==AFD.states.end() && existe0){
@@ -460,45 +459,6 @@ automata::self automata::AFNtoAFD(){
         }
         list.erase(list.begin());
       }
-
-
-
-    //   for (auto& thetransition : (thestate.second)->transitions){
-    //     cout <<"Saaaa ";
-    //     cout << thestate.first << (thetransition)->getSymbol();
-    //     if ((thetransition)->getSymbol()==1){
-    //       superstate11+=(thetransition)->states[1]->getName();
-    //       cout <<"SOO";
-    //       cout<< superstate1;
-    //       cout <<"SÏ";
-    //       aux1=true;
-    //       cout << " AUX1 " << aux1;
-    //     }
-    //     if ((thetransition)->getSymbol()==0){
-    //       superstate00+=(thetransition)->states[1]->getName();
-    //       cout <<"SOO";
-    //       cout<< superstate0;
-    //       cout << " = " << ((thetransition)->states[1]->getName());
-    //       cout << "cuac";
-    //       aux0=true;
-    //     }
-    //   }
-    //   if  (aux0){
-    //     AFD.addTransition(superstate0, superstate00, 0);
-    //   }
-    //   if (aux1){
-    //     cout << "POIUYTRE";
-    //     AFD.addTransition(superstate1, superstate11, 1);
-    //   }
-    //   cout << endl << aux0 << "|" << aux1;
-    //   if (aux1==false){
-    //     cout << "POSIENTRA";
-    //     AFD.addTransition(superstate1, "-", 1);
-    //   }
-    //   if (aux0==false){
-    //     AFD.addTransition(superstate0, "-", 0);
-    //   }
-    //}
     }
   }
   AFD.print();
