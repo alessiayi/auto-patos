@@ -53,6 +53,9 @@ class Automata{
         void printDefaultAlphabet();
         void printAnyAlphabet();
 
+        self* transpuesto();
+        self AFNtoAFD();
+
     public:
         // Constructors and destructor
         Automata(){};
@@ -89,9 +92,7 @@ class Automata{
         bool validateAFD();
 
         // Algorithms
-        self* transpuesto();
-        self AFNtoAFD();
-        void Brzozowski();
+        self Brzozowski();
 };
 typedef Automata<Traits> automata;
 
@@ -461,16 +462,13 @@ automata::self automata::AFNtoAFD(){
       }
     }
   }
-  AFD.print();
   return AFD;
 }
 
 template<>
-void automata::Brzozowski(){
-  transpuesto();
-  AFNtoAFD();
-  transpuesto();
-  AFNtoAFD();
+self automata::Brzozowski(){
+    AFD.print();
+    return AFNtoAFD().AFNtoAFD();
 }
 
 
