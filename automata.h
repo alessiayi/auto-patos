@@ -54,9 +54,9 @@ class Automata{
         void printAnyAlphabet();
 
         self* transpuesto();
-        self AFNtoAFD();
-
+        self AFNtoAFD(self* transpuesto);
     public:
+        
         // Constructors and destructor
         Automata(){};
         Automata(int size);
@@ -376,13 +376,12 @@ automata::self* automata::transpuesto(){
       transpuesto->addTransition(*thetransition, true);
     }
   }
-  transpuesto->print();
+  
   return transpuesto;
 }
 
 template<>
-automata::self automata::AFNtoAFD(){
-  self* transpuesto = this->transpuesto();
+automata::self automata::AFNtoAFD(self* transpuesto){
   self AFD;
 
   AFD.addState("-");
@@ -463,13 +462,31 @@ automata::self automata::AFNtoAFD(){
       }
     }
   }
+
+   static int countertemp = 0;
+   vector<pair<string, string>> change_to;
+    for (auto& thestate: AFD.states){
+      if (thestate.first.length()>1){
+          string aaa= string(1, 90-countertemp);
+          change_to.push_back(make_pair(thestate.first, aaa));
+          thestate.second->changeName(aaa);
+          ++countertemp;
+      }
+    }
+
+    for (auto& thepair : change_to){
+        auto guardar = AFD.states[thepair.first];
+        AFD.states.erase(thepair.first);
+        AFD.states[thepair.second] = guardar;
+    }
+
   return AFD;
 }
 
 template<>
-self automata::Brzozowski(){
-    AFD.print();
-    return AFNtoAFD().AFNtoAFD();
+automata::self automata::Brzozowski(){
+    auto temp = AFNtoAFD(AFNtoAFD(this->transpuesto()).transpuesto());
+    return temp;
 }
 
 automata Input(){

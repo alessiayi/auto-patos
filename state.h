@@ -15,6 +15,7 @@ class State {
         TransitionSeq transitions;
         bool isInitial=false;
         bool isFinal=false;
+        bool compuesto = false;
 
         // Constructors and destructor
         State(S _name, bool isInitial=false, bool isFinal=false);
@@ -23,6 +24,10 @@ class State {
 
         // Access methods
         S getName();
+        void changeName(S new_name) {
+            std::cout <<std::endl <<  name <<" changed to " << new_name;
+            name = new_name;
+        };
 
 };
 
