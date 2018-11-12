@@ -59,6 +59,7 @@ class Automata{
         Automata(int size);
         Automata(StateSeq somestates, bool inverse=false); // Automata from vector of states
         Automata(const Automata &other); // copy constructor
+        void Input();
         ~Automata();
 
         // Debugging methods
@@ -106,7 +107,7 @@ template<>
 automata::Automata(int size) {
     sizeOfAutomata[0] = size;
     state* newstate;
-    for (int i=0;i<=size;++i){
+    for (int i=0;i<size;++i){
         newstate=new state(string(1, i+65));
         states.insert(pair <S, state*> (string(1, i+65), newstate));
     }
@@ -471,6 +472,36 @@ void automata::Brzozowski(){
   AFNtoAFD();
   transpuesto();
   AFNtoAFD();
+}
+
+template<>
+void automata::Input(){//lo deje en funcion pq me dioern erroresde explicit specificacion y preferi que porlomenos corra
+  int cant;
+  string inicial;
+  int cantfinales;
+  string estadoinit;
+  string estadofin;
+  int simbolo;
+  string unfinal;
+  cin >> cant >> inicial >> cantfinales;
+
+  sizeOfAutomata[0] = cant;
+  state* newstate;
+  for (int i=0;i<cant;++i){
+      newstate=new state(string(1, i+65));
+      states.insert(pair <S, state*> (string(1, i+65), newstate));
+  }
+  makeInitial(inicial);
+
+  for (int i=0; i<cantfinales; ++i){
+    cin >> unfinal;
+    makeFinal(unfinal);
+  }
+
+  for (int i=0; i<(cant*2); i++){//AFD solo hay ntransitions=2*estados
+    cin >> estadoinit >> simbolo >> estadofin;
+    addTransition(estadoinit, estadofin, simbolo);
+  }
 }
 
 
