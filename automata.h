@@ -434,7 +434,7 @@ void automata::printMatrix(vector<vector<bool>> M){
     auto itstates = states.begin();
     cout <<endl;
     for (int r=0; r<sizeOfAutomata[0]; ++r){
-        cout << (*itstates).first;
+        cout << (*itstates).first << " ";
         for (int c=0; c<sizeOfAutomata[0]; ++c){
             cout << M[r][c] << " ";
             // if (!M[r][c]) cout <<" x";
@@ -495,7 +495,6 @@ vector<vector<bool>> automata::equivalenceN4(){
     }
 
     copyIdentityMatrix(M);
-    printMatrix(M);
 
     return M;
 }
