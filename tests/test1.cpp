@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "state.h"
-#include "transition.h"
-#include "automata.h"
+#include "../state.h"
+#include "../transition.h"
+#include "../automata.h"
 
 int main() {
   /* Autamata de la figura 4.8 pg. 131 del libro de Hopcroft */
@@ -34,6 +34,8 @@ int main() {
 
   Auto.makeInitial("A");
   Auto.makeFinal("C");
+
+  Auto.equivalenceN4();
 
   
 
