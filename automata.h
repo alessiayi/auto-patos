@@ -6,11 +6,11 @@
 #include <iostream>
 #include <iomanip>
 
+#include <utility> // pair
 #include <vector>
 #include <map>
 #include <set>
 #include <string>
-#include <stack>
 
 #include "state.h"
 #include "transition.h"
@@ -47,14 +47,21 @@ class Automata{
         bool default_alphabet=true;
 
         // Auxiliary methods
+        void copyIdentityMatrix(vector<vector<bool>> &M);
+
         void addTransition(transition sometransition, bool inverse=false);
         TransitionIte removeTransition(state* sinitial, state* sfinal, int symbol);
+
         bool setStateType(S state_name, int new_type);
+
         void printDefaultAlphabet();
         void printAnyAlphabet();
 
         self* transpuesto();
         self AFNtoAFD(self* transpuesto);
+
+        void printMatrix(vector<vector<bool>> &M);
+        
     public:
         
         // Constructors and destructor
@@ -94,6 +101,7 @@ class Automata{
 
         // Algorithms
         self Brzozowski();
+        vector<vector<bool>> equivalenceN4();
 };
 typedef Automata<Traits> automata;
 
@@ -329,6 +337,7 @@ template<>
 bool automata::makeInitial(S state_name){
     for (auto& thestate: states)
         if (thestate.second->isInitial==true) { thestate.second->isInitial=false; break; }
+    initialState = state_name;
 
     if (!setStateType(state_name, 1)) return false;
     return true;
@@ -515,5 +524,76 @@ automata Input(){
     return theAutomata;
 }
 
+template<>
+void automata::printMatrix(vector<vector<bool>> &M){
+    // print
+    cout <<"\n ";
+    for (auto& thestate: states) { cout << " " <<thestate.first; }
+    auto itstates = states.begin();
+    cout <<endl;
+    for (int r=0; r<sizeOfAutomata[0]; ++r){
+        cout << (*itstates).first;
+        for (int c=0; c<sizeOfAutomata[0]; ++c){
+            cout << " " << M[r][c];
+        }
+        cout <<endl;
+        ++itstates;
+    }
+}
+
+template<>
+void automata::copyIdentityMatrix(vector<vector<bool>> &M){
+    for (int i=0; i<M.size(); ++i)
+       for (int j=M[0].size()-1; j>=0; --j){
+           M[i][j] = M[j][i];
+       }
+}
+
+template<>
+vector<vector<bool>> automata::equivalenceN4(){
+    // Initialize matrix and ids in states
+    vector<vector<bool>> M(sizeOfAutomata[0], vector<bool>(sizeOfAutomata[0],1));
+    map<S, int> state_to_id;
+    map<int, state*> id_to_state;
+    int c=0;
+    for (auto& thestate: states) {
+        state_to_id.insert( make_pair(thestate.first, c) ); 
+        id_to_state.insert( make_pair(c, thestate.second) ); 
+        ++c;
+    }
+
+    // Fill cells with at least one final state
+    for (int r=0; r<sizeOfAutomata[0] ; ++r){
+        for (int c=0; c<r; ++c){
+            if (find(finalStates.begin(), finalStates.end(), id_to_state[c]->getName())!=finalStates.end() ||
+                find(finalStates.begin(), finalStates.end(), id_to_state[r]->getName())!=finalStates.end())
+                    M[r][c]=0;
+        }
+    }
+    
+    // Unmark cells
+    bool cancontinue=true;
+    while (cancontinue){
+        cancontinue=false;
+        for (int r=0; r<sizeOfAutomata[0]; ++r){
+            for (int c=0; c<r; ++c){
+                for (int i=0; i<alphabet.size() && M[r][c]; ++i){ // 0 1
+                    S state_rnext = id_to_state[r]->transitions[i]->states[1]->getName();
+                    S state_cnext = id_to_state[c]->transitions[i]->states[1]->getName();
+                    if ( !M [state_to_id[state_rnext]] [state_to_id[state_cnext]] ||
+                        !M [state_to_id[state_cnext]] [state_to_id[state_rnext]]){ // If unmarked
+                        M[r][c]=0;
+                        cancontinue=true;
+                    }
+                }
+            }
+        }
+    }
+
+    copyIdentityMatrix(M);
+    printMatrix(M);
+
+    return M;
+}
 
 #endif

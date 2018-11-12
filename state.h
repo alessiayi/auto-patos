@@ -16,7 +16,7 @@ class State {
         bool isInitial=false;
         bool isFinal=false;
         bool compuesto = false;
-
+        
         // Constructors and destructor
         State(S _name, bool isInitial=false, bool isFinal=false);
         State(const State<A> &other);
