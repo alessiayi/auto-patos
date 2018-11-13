@@ -35,7 +35,12 @@ int main() {
   Auto.makeInitial("A");
   Auto.makeFinal("C");
 
+<<<<<<< HEAD
   Auto.equivalenceN4();
+=======
+  Auto.printMatrix(Auto.equivalenceN2());
+  Auto.printMatrix(Auto.equivalenceN4());
+>>>>>>> equivalence-n2
 
   
 
