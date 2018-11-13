@@ -99,7 +99,6 @@ class Automata{
         self* transpuesto();
         self AFNtoAFD(self* transpuesto);
 
-        void printMatrix(vector<vector<bool>> M);
         void uncheckCell(vector<vector<bool>>& M, StatesCoord touncheck, map<pair<S, S>,StatesCoord*> mapofcoordinates);
         
     public:
@@ -115,6 +114,7 @@ class Automata{
         // Debugging methods
         void print();
         void formalPrint();
+        void printMatrix(vector<vector<bool>> M);
 
         // Access methods
         int* size();
@@ -142,6 +142,7 @@ class Automata{
         // Algorithms
         self Brzozowski();
         vector<vector<bool>> equivalenceN4();
+        vector<vector<bool>> equivalenceN2();
 
 };
 typedef Automata<Traits> automata;
@@ -299,8 +300,9 @@ void automata::print(){
 
 template<>
 void automata::formalPrint(){
-    cout << sizeOfAutomata[0] <<" "<< initialState <<" "<< finalStates.size();
-    for (auto& thefinalstate : finalStates) cout <<" "<< thefinalstate;
+    cout << endl <<sizeOfAutomata[0] <<" "<< initialState <<" "<< finalStates.size();
+    for (auto& thestate : states) 
+        if (thestate.second->isFinal) cout <<" "<< thestate.first;
     for (auto& thestate : states)
         for (auto& thetrans : thestate.second->transitions)
             cout << endl <<thetrans->states[0]->getName() <<" "<< thetrans->getSymbol()<<" "<<thetrans->states[1]->getName();
@@ -567,11 +569,11 @@ automata Input(){
 template<>
 void automata::printMatrix(vector<vector<bool>> M){
     cout <<"\n\n ";
-    for (auto& thestate: states) { cout << " " <<thestate.first; }
+    //for (auto& thestate: states) { cout << " " <<thestate.first; }
     auto itstates = states.begin();
     cout <<endl;
     for (int r=0; r<sizeOfAutomata[0]; ++r){
-        cout << (*itstates).first << " ";
+        //cout << (*itstates).first << " ";
         for (int c=0; c<sizeOfAutomata[0]; ++c){
             cout << M[r][c] << " ";
             // if (!M[r][c]) cout <<" x";
@@ -692,7 +694,7 @@ vector<vector<bool>> automata::equivalenceN2(){
         }
     }
 
-    copyIdentityMatrix(M);
+    //copyIdentityMatrix(M);
 
     return M;
 }
