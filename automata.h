@@ -1,5 +1,3 @@
-// TODO: Solve error when using true_type and false_type constructors simultaneously
-
 #ifndef AUTOMATA_H
 #define AUTOMATA_H
 
@@ -608,8 +606,8 @@ vector<vector<bool>> automata::equivalenceN4(){
     // Fill cells with at least one final state
     for (int r=0; r<sizeOfAutomata[0] ; ++r){
         for (int c=0; c<r; ++c){
-            if (find(finalStates.begin(), finalStates.end(), id_to_state[c]->getName())!=finalStates.end() ||
-                find(finalStates.begin(), finalStates.end(), id_to_state[r]->getName())!=finalStates.end())
+            if ((find(finalStates.begin(), finalStates.end(), id_to_state[c]->getName())!=finalStates.end()) +
+                (find(finalStates.begin(), finalStates.end(), id_to_state[r]->getName())!=finalStates.end())==1)
                     M[r][c]=0;
         }
     }
@@ -640,7 +638,7 @@ vector<vector<bool>> automata::equivalenceN4(){
 
 template<>
 void automata::uncheckCell(vector<vector<bool>>& M, StatesCoord touncheck, map<pair<S, S>,StatesCoord*> mapofcoordinates){
-    // if (!M[touncheck.r][touncheck.c]) return; // already unchecked
+    if (!M[touncheck.r][touncheck.c]) return; // already unchecked
     M[touncheck.r][touncheck.c] = 0;
     for ( auto& thedependency : (*mapofcoordinates[make_pair(touncheck.stateX->getName(), touncheck.stateY->getName())]).dependencies ){
         if (M[thedependency.r][thedependency.c]){ // if checked, uncheck
@@ -652,7 +650,7 @@ void automata::uncheckCell(vector<vector<bool>>& M, StatesCoord touncheck, map<p
 template<>
 vector<vector<bool>> automata::equivalenceN2(){
     // Initialize matrix and ids in states
-    vector<vector<bool>> M(sizeOfAutomata[0], vector<bool>(sizeOfAutomata[0],1));
+    vector<vector<bool>> M(sizeOfAutomata[0], vector<bool>(sizeOfAutomata`[0],1));
     map<S, int> state_to_id;
     map<int, S> id_to_state;
     int c=0;
@@ -686,15 +684,15 @@ vector<vector<bool>> automata::equivalenceN2(){
     // Fill cells recursively with at least one final state
     for (int r=0; r<sizeOfAutomata[0] ; ++r){
         for (int c=0; c<r; ++c){
-            if (finalStates.find(id_to_state[c])!=finalStates.end() ||
-                finalStates.find(id_to_state[r])!=finalStates.end()){
+            if ((finalStates.find(id_to_state[c])!=finalStates.end()) +
+                (finalStates.find(id_to_state[r])==finalStates.end()) == 1){
                 auto temp = StatesCoord(states[id_to_state[r]], states[id_to_state[c]], r, c);
                 uncheckCell(M, *mapofcoordinates[make_pair(id_to_state[r], id_to_state[c])] , mapofcoordinates);
             }
         }
     }
 
-    //copyIdentityMatrix(M);
+    copyIdentityMatrix(M);
 
     return M;
 }
