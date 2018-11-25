@@ -612,8 +612,8 @@ vector<vector<bool>> automata::equivalenceN4(){
     // Fill cells with at least one final state
     for (int r=0; r<sizeOfAutomata[0] ; ++r){
         for (int c=0; c<r; ++c){
-            if (find(finalStates.begin(), finalStates.end(), id_to_state[c]->getName())!=finalStates.end() ||
-                find(finalStates.begin(), finalStates.end(), id_to_state[r]->getName())!=finalStates.end())
+            if ((find(finalStates.begin(), finalStates.end(), id_to_state[c]->getName())!=finalStates.end()) +
+                (find(finalStates.begin(), finalStates.end(), id_to_state[r]->getName())!=finalStates.end())==1)
                     M[r][c]=0;
         }
     }
