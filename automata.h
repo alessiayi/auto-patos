@@ -55,7 +55,7 @@ class Automata{
             StatesCoord(state* stx, state* sty, int _r=0, int _c=0){
                 if (stx->getName() > sty->getName()) { stateX=stx; stateY=sty; }
                 else { stateX=sty; stateY=stx; }
-               
+
                 r = max(_r, _c);
                 c = min(_r, _c);
             }
@@ -94,11 +94,11 @@ class Automata{
         void printDefaultAlphabet();
         void printAnyAlphabet();
 
-        self* transpuesto();
+
         self AFNtoAFD(self* transpuesto);
 
         void uncheckCell(vector<vector<bool>>& M, StatesCoord touncheck, map<pair<S, S>,StatesCoord*> mapofcoordinates);
-        
+
     public:
 
         // Constructors and destructor
@@ -136,17 +136,21 @@ class Automata{
 
         // Extras
         bool validateAFD();
+        self AFNtoAFD2(self* transpuesto);
+        self* transpuesto();
+        void sort_string(string &newNode);
 
         // Algorithms
         self Brzozowski();
         vector<vector<bool>> equivalenceN4();
         vector<vector<bool>> equivalenceN2();
+        self Moore();
 
 };
 typedef Automata<Traits> automata;
 
 /*
-Explicit template specializations 
+Explicit template specializations
 (explicits specialization must go before implicit)
 */
 
@@ -156,8 +160,8 @@ automata::Automata(int size) {
     sizeOfAutomata[0] = size;
     state* newstate;
     for (int i=0;i<size;++i){
-        newstate=new state(string(1, i+65));
-        states.insert(pair <S, state*> (string(1, i+65), newstate));
+        newstate=new state(to_string(i));
+        states.insert(pair <S, state*> (to_string(i), newstate));
     }
 };
 
@@ -299,7 +303,7 @@ void automata::print(){
 template<>
 void automata::formalPrint(){
     cout << endl <<sizeOfAutomata[0] <<" "<< initialState <<" "<< finalStates.size();
-    for (auto& thestate : states) 
+    for (auto& thestate : states)
         if (thestate.second->isFinal) cout <<" "<< thestate.first;
     for (auto& thestate : states)
         for (auto& thetrans : thestate.second->transitions)
@@ -425,7 +429,7 @@ automata::self* automata::transpuesto(){
       transpuesto->addTransition(*thetransition, true);
     }
   }
-  
+
   return transpuesto;
 }
 
@@ -598,20 +602,20 @@ vector<vector<bool>> automata::equivalenceN4(){
     map<int, state*> id_to_state;
     int c=0;
     for (auto& thestate: states) {
-        state_to_id.insert( make_pair(thestate.first, c) ); 
-        id_to_state.insert( make_pair(c, thestate.second) ); 
+        state_to_id.insert( make_pair(thestate.first, c) );
+        id_to_state.insert( make_pair(c, thestate.second) );
         ++c;
     }
 
     // Fill cells with at least one final state
     for (int r=0; r<sizeOfAutomata[0] ; ++r){
         for (int c=0; c<r; ++c){
-            if ((find(finalStates.begin(), finalStates.end(), id_to_state[c]->getName())!=finalStates.end()) +
-                (find(finalStates.begin(), finalStates.end(), id_to_state[r]->getName())!=finalStates.end())==1)
+            if (find(finalStates.begin(), finalStates.end(), id_to_state[c]->getName())!=finalStates.end() ||
+                find(finalStates.begin(), finalStates.end(), id_to_state[r]->getName())!=finalStates.end())
                     M[r][c]=0;
         }
     }
-    
+
     // Unmark cells
     bool cancontinue=true;
     while (cancontinue){
@@ -632,6 +636,7 @@ vector<vector<bool>> automata::equivalenceN4(){
     }
 
     copyIdentityMatrix(M);
+    printMatrix(M);
 
     return M;
 }
@@ -650,13 +655,13 @@ void automata::uncheckCell(vector<vector<bool>>& M, StatesCoord touncheck, map<p
 template<>
 vector<vector<bool>> automata::equivalenceN2(){
     // Initialize matrix and ids in states
-    vector<vector<bool>> M(sizeOfAutomata[0], vector<bool>(sizeOfAutomata`[0],1));
+    vector<vector<bool>> M(sizeOfAutomata[0], vector<bool>(sizeOfAutomata[0],1));
     map<S, int> state_to_id;
     map<int, S> id_to_state;
     int c=0;
     for (auto& thestate: states) {
-        state_to_id.insert( make_pair(thestate.first, c) ); 
-        id_to_state.insert( make_pair(c, thestate.first) ); 
+        state_to_id.insert( make_pair(thestate.first, c) );
+        id_to_state.insert( make_pair(c, thestate.first) );
         ++c;
     }
 
@@ -695,6 +700,75 @@ vector<vector<bool>> automata::equivalenceN2(){
     copyIdentityMatrix(M);
 
     return M;
+}
+
+template<>
+automata::self automata::Moore(){
+  self moore;
+  auto matriz=equivalenceN4();
+  string group;
+  vector <string> visited;
+  map<S, S> rename;
+  bool fin=false;
+  bool ini=false;
+  bool add=false;
+  int c=0;
+  for (int i=0; i<states.size(); i++){
+    cout << endl;
+    if (find (visited.begin(), visited.end(), to_string(i)) == visited.end()){
+      visited.push_back(to_string(i));
+      rename[to_string(i)]=to_string(c);
+      add=true;
+    }
+    for (int j=0; j<states.size(); j++){
+      if (i>j){
+        continue;
+      }
+      else if (matriz[i][j]==1){
+        if (find (visited.begin(), visited.end(), to_string(j)) == visited.end()){
+          visited.push_back(to_string(j));
+          rename[to_string(j)]=to_string(c);
+          add=true;
+        }
+        for (auto& thestate : states){
+          if (thestate.first==to_string(i)){
+            if (thestate.second->isFinal){
+              fin=true;
+            }
+            if (thestate.second->isInitial){
+              ini=true;
+            }
+          }
+          else if (thestate.first==to_string(j)){
+            if (thestate.second->isFinal){
+              fin=true;
+            }
+            if (thestate.second->isInitial){
+              ini=true;
+            }
+          }
+        }
+      }
+    }
+    if (add){
+      moore.addState(to_string(c),ini,fin);
+    }
+    ++c;
+    ini=false;
+    fin=false;
+    group.clear();
+    add=false;
+  }
+
+  for (auto& el: rename){
+    cout << el.first << " renombrado a " << el.second;
+    for (int i=0; i<alphabet.size(); ++i){ // 0 1
+        moore.addTransition(el.second, rename[states[el.first]->transitions[i]->states[1]->getName()], i);
+        if (states[el.first]->isInitial) moore.makeInitial(el.second);
+        if (states[el.first]->isFinal) moore.makeFinal(el.second);
+    }
+  }
+  return moore;
 }
 
 
