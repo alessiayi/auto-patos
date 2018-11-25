@@ -761,7 +761,7 @@ automata::self automata::Moore(){
   }
 
   for (auto& el: rename){
-    cout << el.first << " renombrado a " << el.second;
+    cout << el.first << " renombrado a " << el.second << endl;
     for (int i=0; i<alphabet.size(); ++i){ // 0 1
         moore.addTransition(el.second, rename[states[el.first]->transitions[i]->states[1]->getName()], i);
         if (states[el.first]->isInitial) moore.makeInitial(el.second);
