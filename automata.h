@@ -5,7 +5,7 @@
 #include <iomanip>
 
 #include <utility> // pair
-#include <algorithm> // minmax
+#include <algorithm> // minmax, transform
 #include <vector>
 #include <map>
 #include <set>
@@ -145,6 +145,8 @@ class Automata{
         vector<vector<bool>> equivalenceN4();
         vector<vector<bool>> equivalenceN2();
         self Moore();
+
+        self Hopcroft(bool print_rename=false);
 
 };
 typedef Automata<Traits> automata;
@@ -770,6 +772,90 @@ automata::self automata::Moore(){
   }
   return moore;
 }
+
+
+template<>
+automata::self automata::Hopcroft(bool print_rename){
+    // Create a set of sets of states. { {final states}, {non final states} }
+    set<set<S>> equivalent_sets;
+    equivalent_sets.insert(finalStates);
+    set<S> temp;
+    for (auto& thestate: states) if (!thestate.second->isFinal) temp.insert(thestate.first);
+    equivalent_sets.insert(temp);
+
+    // Create a set of sets to partition and insert final states
+    set<set<S>> to_partition;
+    to_partition.insert(finalStates);
+
+    while (!to_partition.empty()){
+        set<S> prev_states;
+        set<S> current_set = *to_partition.begin();
+        to_partition.erase(to_partition.begin());
+        for (int i=0; i<alphabet.size(); ++i){ // 0 1
+            // if a state goes to another state in current_set with symbol, insert in prev_states
+            for (auto& thestate: states){
+                S target_state = thestate.second->transitions[i]->states[1]->getName();
+                if (current_set.find(target_state)!=current_set.end())
+                    prev_states.insert(thestate.first);
+            }
+
+            for (auto it_equiv=equivalent_sets.begin(); it_equiv!=equivalent_sets.end();){
+                set<S> intersection;
+                set<S> difference;
+                set_intersection((*it_equiv).begin(),(*it_equiv).end(),prev_states.begin(),prev_states.end(),
+                                  inserter(intersection,intersection.begin()));
+                set_difference((*it_equiv).begin(),(*it_equiv).end(),prev_states.begin(),prev_states.end(),
+                                  inserter(difference,difference.begin()));
+                if (!intersection.empty() && !difference.empty()){
+                    // replace it_equiv with intersection and difference
+                    equivalent_sets.insert(intersection);
+                    equivalent_sets.insert(difference);
+
+                    // if it_equiv in to_partition, replace it with both sets
+                    if (to_partition.find(*it_equiv)!=to_partition.end()){
+                        to_partition.insert(intersection);
+                        to_partition.insert(difference);
+                        to_partition.erase(*it_equiv);
+                    }
+                    // else, insert only the smaller set in to_partition
+                    else{
+                        if (difference.size()>intersection.size()) to_partition.insert(intersection);
+                        else to_partition.insert(difference);
+                    }
+                    it_equiv = equivalent_sets.erase(it_equiv);
+                }
+                else ++it_equiv;
+            }
+        }
+    }
+
+    map<S, S> rename;
+    int c=0;
+    if (print_rename) cout <<endl;
+    for (auto& theset : equivalent_sets){
+        for (auto& el: theset){
+            rename[el] = to_string(c);
+            if (print_rename) cout << el << " ";
+        }
+        if (print_rename) cout << "changed to " << to_string(c) <<endl;
+        ++c;
+    }
+
+    self minAFD(equivalent_sets.size());
+
+    for (auto& theset : equivalent_sets){
+        for (auto& el: theset){
+            for (int i=0; i<alphabet.size(); ++i){ // 0 1
+                minAFD.addTransition(rename[el], rename[states[el]->transitions[i]->states[1]->getName()], i);
+                if (states[el]->isInitial) minAFD.makeInitial(rename[el]);
+                if (states[el]->isFinal) minAFD.makeFinal(rename[el]);
+            }
+        }
+    }
+
+    return minAFD;
+}
+
 
 
 
