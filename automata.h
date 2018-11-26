@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <queue>
 #include <string>
 
 #include <chrono> // measure execution time
@@ -98,8 +99,6 @@ class Automata{
 
 
         self AFNtoAFD(self* transpuesto);
-
-        void uncheckCell(vector<vector<bool>>& M, int r, int c, map<pair<int, int>,StatesCoord*> mapofcoordinates);
 
     public:
 
@@ -652,17 +651,6 @@ vector<vector<bool>> automata::equivalenceN4(){
 }
 
 template<>
-void automata::uncheckCell(vector<vector<bool>>& M, int r, int c, map<pair<int, int>,StatesCoord*> mapofcoordinates){
-    if (!M[r][c]) return; // already unchecked
-    M[r][c] = 0;
-    for ( auto& thedependency : (*mapofcoordinates[make_pair(r, c)]).dependencies ){
-        if (M[thedependency.r][thedependency.c]){ // if checked, uncheck
-            uncheckCell(M, thedependency.r, thedependency.c, mapofcoordinates);
-        }
-    }
-}
-
-template<>
 vector<vector<bool>> automata::equivalenceN2(){
     
     // Initialize matrix
@@ -693,15 +681,30 @@ vector<vector<bool>> automata::equivalenceN2(){
     ios_base::sync_with_stdio(false);
     // ------------------ Test time ------------------
 
-    // Fill cells recursively with at least one final state
+    // Initialize queue
+    queue<StatesCoord*> touncheck;
     for (int r=0; r<sizeOfAutomata[0] ; ++r){
         for (int c=0; c<r; ++c){
             if ((finalStates.find(to_string(c))==finalStates.end()) +
                 (finalStates.find(to_string(r))==finalStates.end()) == 1){
-                auto temp = StatesCoord(states[to_string(r)], states[to_string(c)], r, c);
-                uncheckCell(M, r, c , mapofcoordinates);
+                M[r][c] = 0;
+                for (auto& dependency : mapofcoordinates[make_pair(r, c)]->dependencies) 
+                    touncheck.push(mapofcoordinates[make_pair(dependency.r, dependency.c)]);
             }
         }
+    }
+
+    while (!touncheck.empty()){
+        auto dependency = touncheck.front();
+        if (M[dependency->r][dependency->c]){ // if check (equivalent), uncheck (distinguishable)
+            M[dependency->r][dependency->c] = 0;
+            for (auto& dep_of_dependency : dependency->dependencies){
+                if (M[dep_of_dependency.r][dep_of_dependency.c]){ // if cell wasn't already unchecked
+                    touncheck.push(mapofcoordinates[make_pair(dep_of_dependency.r, dep_of_dependency.c)] );
+                }
+            }
+        } 
+        touncheck.pop();   
     }
 
     // ------------------ Test time ------------------
@@ -710,7 +713,7 @@ vector<vector<bool>> automata::equivalenceN2(){
     time_taken *= 1e-6;
     cout << "Equivalence N2 time: " << fixed << time_taken << setprecision(9) << " ms" << endl; 
     // ------------------ Test time ------------------
-
+    
     copyIdentityMatrix(M);
 
     return M;
