@@ -11,6 +11,8 @@
 #include <set>
 #include <string>
 
+#include <chrono> // measure execution time
+
 #include "state.h"
 #include "transition.h"
 
@@ -613,6 +615,11 @@ vector<vector<bool>> automata::equivalenceN4(){
         }
     }
 
+    // ------------------ Test time ------------------
+    auto start = chrono::high_resolution_clock::now(); 
+    ios_base::sync_with_stdio(false);
+    // ------------------ Test time ------------------
+
     // Unmark cells
     bool cancontinue=true;
     while (cancontinue){
@@ -631,6 +638,13 @@ vector<vector<bool>> automata::equivalenceN4(){
             }
         }
     }
+
+    // ------------------ Test time ------------------
+    auto end = chrono::high_resolution_clock::now();
+    double time_taken = chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
+    time_taken *= 1e-6;
+    cout << "Equivalence N4 time: " << fixed << time_taken << setprecision(9) << " ms" << endl; 
+    // ------------------ Test time ------------------
 
     copyIdentityMatrix(M);
 
@@ -674,6 +688,10 @@ vector<vector<bool>> automata::equivalenceN2(){
             }
         }
     }
+    // ------------------ Test time ------------------
+    auto start = chrono::high_resolution_clock::now(); 
+    ios_base::sync_with_stdio(false);
+    // ------------------ Test time ------------------
 
     // Fill cells recursively with at least one final state
     for (int r=0; r<sizeOfAutomata[0] ; ++r){
@@ -685,6 +703,13 @@ vector<vector<bool>> automata::equivalenceN2(){
             }
         }
     }
+
+    // ------------------ Test time ------------------
+    auto end = chrono::high_resolution_clock::now();
+    double time_taken = chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
+    time_taken *= 1e-6;
+    cout << "Equivalence N2 time: " << fixed << time_taken << setprecision(9) << " ms" << endl; 
+    // ------------------ Test time ------------------
 
     copyIdentityMatrix(M);
 
@@ -699,6 +724,11 @@ automata::self automata::Moore(bool print_rename){
   map<S, S> rename;
   bool add=false;
   int c=0;
+  // ------------------ Test time ------------------
+    auto start = chrono::high_resolution_clock::now(); 
+    ios_base::sync_with_stdio(false);
+    // ------------------ Test time ------------------
+    
   for (int i=0; i<states.size(); i++){
     if (find (visited.begin(), visited.end(), to_string(i)) == visited.end()){
       visited.push_back(to_string(i));
@@ -718,6 +748,13 @@ automata::self automata::Moore(bool print_rename){
     ++c;
     add=false;
   }
+
+  // ------------------ Test time ------------------
+    auto end = chrono::high_resolution_clock::now();
+    double time_taken = chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
+    time_taken *= 1e-6;
+    cout << "Moore time: " << fixed << time_taken << setprecision(9) << " ms" << endl; 
+    // ------------------ Test time ------------------
 
   if (print_rename) cout << endl;
   for (auto& el: rename){
@@ -744,6 +781,11 @@ automata::self automata::Hopcroft(bool print_rename){
     // Create a set of sets to partition and insert final states
     set<set<S>> to_partition;
     to_partition.insert(finalStates);
+
+    // ------------------ Test time ------------------
+    auto start = chrono::high_resolution_clock::now(); 
+    ios_base::sync_with_stdio(false);
+    // ------------------ Test time ------------------
 
     while (!to_partition.empty()){
         set<S> prev_states;
@@ -786,6 +828,13 @@ automata::self automata::Hopcroft(bool print_rename){
             }
         }
     }
+
+    // ------------------ Test time ------------------
+    auto end = chrono::high_resolution_clock::now();
+    double time_taken = chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
+    time_taken *= 1e-6;
+    cout << "Hopcroft time: " << fixed << time_taken << setprecision(9) << " ms" << endl; 
+    // ------------------ Test time ------------------
 
     map<S, S> rename;
     int c=0;
