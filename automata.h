@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <unordered_set>
 #include <queue>
 #include <string>
 
@@ -722,25 +723,25 @@ vector<vector<bool>> automata::equivalenceN2(){
 template<>
 automata::self automata::Moore(bool print_rename){
   self moore;
-  auto matriz=equivalenceN4();
-  vector <string> visited;
-  map<S, S> rename;
-  bool add=false;
-  int c=0;
   // ------------------ Test time ------------------
     auto start = chrono::high_resolution_clock::now(); 
     ios_base::sync_with_stdio(false);
     // ------------------ Test time ------------------
+  auto matriz=equivalenceN2();
+  unordered_set <int> visited;
+  map<S, S> rename;
+  bool add=false;
+  int c=0;
     
   for (int i=0; i<states.size(); i++){
-    if (find (visited.begin(), visited.end(), to_string(i)) == visited.end()){
-      visited.push_back(to_string(i));
+    if (visited.find(i) == visited.end()){
+      visited.insert(i);
       rename[to_string(i)]=to_string(c);
       add=true;
     }
     for (int j=0; j<states.size(); j++){
-        if (find (visited.begin(), visited.end(), to_string(j))==visited.end() && matriz[i][j]==1){
-          visited.push_back(to_string(j));
+        if (visited.find(j)==visited.end() && matriz[i][j]==1){
+          visited.insert(j);
           rename[to_string(j)]=to_string(c);
           add=true;
         }
