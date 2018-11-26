@@ -721,16 +721,11 @@ automata::self automata::Moore(bool print_rename){
       add=true;
     }
     for (int j=0; j<states.size(); j++){
-      if (i>j){
-        continue;
-      }
-      else if (matriz[i][j]==1){
-        if (find (visited.begin(), visited.end(), to_string(j)) == visited.end()){
+        if (find (visited.begin(), visited.end(), to_string(j))==visited.end() && matriz[i][j]==1){
           visited.push_back(to_string(j));
           rename[to_string(j)]=to_string(c);
           add=true;
         }
-      }
     }
     if (add){
         moore.addState(to_string(c));
