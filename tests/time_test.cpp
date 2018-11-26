@@ -1,10 +1,10 @@
 #include <iostream>
 #include <chrono> // measure execution time
 
-#include "automata.h"
+#include "../automata.h"
 
 int main() {
-    const int tries = 1000;
+    const int tries = 50;
 
     cout << "Input:\n";
     automata test = Input();
