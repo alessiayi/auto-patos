@@ -144,7 +144,7 @@ class Automata{
         self Brzozowski();
         vector<vector<bool>> equivalenceN4();
         vector<vector<bool>> equivalenceN2();
-        self Moore();
+        self Moore(bool print_rename=false);
 
         self Hopcroft(bool print_rename=false);
 
@@ -203,14 +203,46 @@ automata::TransitionIte automata::removeTransition(state* sinitial, state* sfina
 };
 
 template<>
-bool automata::addState(S state_name, bool isInitial, bool isFinal){
-    if (states.find(state_name)!=states.end()) return false; // getName taken
-    state* newstate = new state(state_name, isInitial, isFinal);
-    states.insert(pair<S, state*> (state_name, newstate));
-    ++sizeOfAutomata[0];
+bool automata::setStateType(S state_name, int new_type){
+    if ((states.find(state_name)==states.end()) || // not found
+       (states[state_name]->isInitial && new_type==1) ||
+       (states[state_name]->isFinal && new_type==2)) return false;// already set
+    switch (new_type){
+        case 0: states[state_name]->isInitial=false; states[state_name]->isFinal=false; break;
+        case 1: states[state_name]->isInitial=true; break;
+        case 2: states[state_name]->isFinal=true;
+    }
     return true;
 };
 
+template<>
+bool automata::makeInitial(S state_name){
+    for (auto& thestate: states)
+        if (thestate.second->isInitial==true) { thestate.second->isInitial=false; break; }
+    initialState = state_name;
+
+    if (!setStateType(state_name, 1)) return false;
+    return true;
+};
+
+template<>
+bool automata::makeFinal(S state_name){
+    if (!setStateType(state_name, 2)) return false;
+    finalStates.insert(state_name);
+    return true;
+};
+
+template<>
+bool automata::addState(S state_name, bool isInitial, bool isFinal){
+    if (states.find(state_name)!=states.end()) return false; // getName taken
+    state* newstate = new state(state_name);
+    states.insert(pair<S, state*> (state_name, newstate));
+    ++sizeOfAutomata[0];
+
+    if (isInitial) makeInitial(state_name);
+    if (isFinal) makeFinal(state_name);
+    return true;
+};
 
 /*
 Implicit template specializations
@@ -305,8 +337,9 @@ void automata::print(){
 template<>
 void automata::formalPrint(){
     cout << endl <<sizeOfAutomata[0] <<" "<< initialState <<" "<< finalStates.size();
-    for (auto& thestate : states)
-        if (thestate.second->isFinal) cout <<" "<< thestate.first;
+    for (auto& thefstate : finalStates) cout <<" "<< thefstate;
+    // for (auto& thestate : states)
+    //     if (thestate.second->isFinal) cout <<" "<< thestate.first;
     for (auto& thestate : states)
         for (auto& thetrans : thestate.second->transitions)
             cout << endl <<thetrans->states[0]->getName() <<" "<< thetrans->getSymbol()<<" "<<thetrans->states[1]->getName();
@@ -363,36 +396,6 @@ bool automata::removeState(S state_name){
 
 
     --sizeOfAutomata[0];
-    return true;
-};
-
-template<>
-bool automata::setStateType(S state_name, int new_type){
-    if (states.find(state_name)==states.end() || // not found
-        (states[state_name]->isInitial && new_type==1) ||
-        (states[state_name]->isFinal && new_type==2)) return false; // already set
-    switch (new_type){
-        case 0: states[state_name]->isInitial=false; states[state_name]->isFinal=false; break;
-        case 1: states[state_name]->isInitial=true; break;
-        case 2: states[state_name]->isFinal=true;
-    }
-    return true;
-};
-
-template<>
-bool automata::makeInitial(S state_name){
-    for (auto& thestate: states)
-        if (thestate.second->isInitial==true) { thestate.second->isInitial=false; break; }
-    initialState = state_name;
-
-    if (!setStateType(state_name, 1)) return false;
-    return true;
-};
-
-template<>
-bool automata::makeFinal(S state_name){
-    if (!setStateType(state_name, 2)) return false;
-    finalStates.insert(state_name);
     return true;
 };
 
@@ -638,7 +641,6 @@ vector<vector<bool>> automata::equivalenceN4(){
     }
 
     copyIdentityMatrix(M);
-    printMatrix(M);
 
     return M;
 }
@@ -705,18 +707,14 @@ vector<vector<bool>> automata::equivalenceN2(){
 }
 
 template<>
-automata::self automata::Moore(){
+automata::self automata::Moore(bool print_rename){
   self moore;
   auto matriz=equivalenceN4();
-  string group;
   vector <string> visited;
   map<S, S> rename;
-  bool fin=false;
-  bool ini=false;
   bool add=false;
   int c=0;
   for (int i=0; i<states.size(); i++){
-    cout << endl;
     if (find (visited.begin(), visited.end(), to_string(i)) == visited.end()){
       visited.push_back(to_string(i));
       rename[to_string(i)]=to_string(c);
@@ -732,38 +730,18 @@ automata::self automata::Moore(){
           rename[to_string(j)]=to_string(c);
           add=true;
         }
-        for (auto& thestate : states){
-          if (thestate.first==to_string(i)){
-            if (thestate.second->isFinal){
-              fin=true;
-            }
-            if (thestate.second->isInitial){
-              ini=true;
-            }
-          }
-          else if (thestate.first==to_string(j)){
-            if (thestate.second->isFinal){
-              fin=true;
-            }
-            if (thestate.second->isInitial){
-              ini=true;
-            }
-          }
-        }
       }
     }
     if (add){
-      moore.addState(to_string(c),ini,fin);
+        moore.addState(to_string(c));
     }
     ++c;
-    ini=false;
-    fin=false;
-    group.clear();
     add=false;
   }
 
+  if (print_rename) cout << endl;
   for (auto& el: rename){
-    cout << el.first << " renombrado a " << el.second << endl;
+    if (print_rename) cout << el.first << " renombrado a " << el.second;
     for (int i=0; i<alphabet.size(); ++i){ // 0 1
         moore.addTransition(el.second, rename[states[el.first]->transitions[i]->states[1]->getName()], i);
         if (states[el.first]->isInitial) moore.makeInitial(el.second);
