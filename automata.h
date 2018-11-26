@@ -693,8 +693,9 @@ vector<vector<bool>> automata::equivalenceN2(){
     // Fill cells recursively with at least one final state
     for (int r=0; r<sizeOfAutomata[0] ; ++r){
         for (int c=0; c<r; ++c){
-            if ((finalStates.find(id_to_state[c])!=finalStates.end()) +
+            if ((finalStates.find(id_to_state[c])==finalStates.end()) +
                 (finalStates.find(id_to_state[r])==finalStates.end()) == 1){
+
                 auto temp = StatesCoord(states[id_to_state[r]], states[id_to_state[c]], r, c);
                 uncheckCell(M, *mapofcoordinates[make_pair(id_to_state[r], id_to_state[c])] , mapofcoordinates);
             }
