@@ -663,7 +663,6 @@ vector<vector<bool>> automata::equivalenceN2(){
         }
     }
 
-
     // Initialize queue
     queue<StatesCoord*> touncheck;
     for (int r=0; r<sizeOfAutomata[0] ; ++r){
@@ -677,8 +676,6 @@ vector<vector<bool>> automata::equivalenceN2(){
         }
     }
 
-
-
     while (!touncheck.empty()){
         auto dependency = touncheck.front();
         if (M[dependency->r][dependency->c]){ // if check (equivalent), uncheck (distinguishable)
@@ -686,7 +683,6 @@ vector<vector<bool>> automata::equivalenceN2(){
             for (auto& dep_of_dependency : dependency->dependencies){
                 if (M[dep_of_dependency.r][dep_of_dependency.c]){ // if cell wasn't already unchecked
                     touncheck.push(mapofcoordinates[make_pair(dep_of_dependency.r, dep_of_dependency.c)] );
-                    cout <<"\nHere";
                 }
             }
         } 
