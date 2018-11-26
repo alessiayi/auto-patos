@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <queue>
 #include <string>
 
 #include "state.h"
@@ -675,6 +676,38 @@ vector<vector<bool>> automata::equivalenceN2(){
         }
     }
 
+
+    // Initialize queue
+    queue<StatesCoord*> touncheck;
+    for (int r=0; r<sizeOfAutomata[0] ; ++r){
+        for (int c=0; c<r; ++c){
+            if ((finalStates.find(to_string(c))==finalStates.end()) +
+                (finalStates.find(to_string(r))==finalStates.end()) == 1){
+                M[r][c] = 0;
+                for (auto& dependency : mapofcoordinates[make_pair(r, c)]->dependencies) 
+                    touncheck.push(mapofcoordinates[make_pair(dependency.r, dependency.c)]);
+            }
+        }
+    }
+
+
+
+    while (!touncheck.empty()){
+        auto dependency = touncheck.front();
+        
+        
+        if (M[dependency->r][dependency->c]){ // if check (equivalent), uncheck (distinguishable)
+            for (auto& dep_of_dependency : dependency->dependencies){
+                if (M[dep_of_dependency.r][dep_of_dependency.c]){ // if cell wasn't already unchecked
+                    touncheck.push(mapofcoordinates[make_pair(dep_of_dependency.r, dep_of_dependency.c)] );
+                    cout <<"\nHere";
+                }
+            }
+        } 
+        touncheck.pop();   
+    }
+    
+/*
     // Fill cells recursively with at least one final state
     for (int r=0; r<sizeOfAutomata[0] ; ++r){
         for (int c=0; c<r; ++c){
@@ -685,8 +718,8 @@ vector<vector<bool>> automata::equivalenceN2(){
             }
         }
     }
-
-    copyIdentityMatrix(M);
+*/
+    // copyIdentityMatrix(M);
 
     return M;
 }
