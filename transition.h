@@ -1,65 +1,32 @@
-#ifndef TRANSITION_H
-#define TRANSITION_H
+#ifndef EDGE_H
+#define EDGE_H
 
 #include "state.h"
-#include <iostream>
+#include "tuple"
+
+using namespace std;
 
 template <typename A>
-class Transition {
-    public:
-        typedef typename A::T T;
-        typedef typename A::state state;
-        state* states[2];
+struct Transition {
+typedef typename A::T T;
+typedef typename A::state state;
 
-    private:
-        T symbol;
-        
-    public:
-        // Constructor and destructor
-        Transition(state* Vi,state* Vf,T symbol);
-        ~Transition();
+T transitionChar;
+state* stateBegin;
+state* stateEnd;
 
-        // Access methods
-        int getSymbol();
+Transition() {};
 
-        // Overloads
-        bool operator==(Transition<A> cmp);
-        bool operator>(Transition<A> cmp) const;
-        bool operator<(Transition<A> cmp) const;
+Transition  (T transitionChar,
+            state* begin,
+            state* end):
+
+            transitionChar(transitionChar),
+            stateBegin(begin),
+            stateEnd(end) {};
+
+~Transition() {};
+
 };
-
-template <typename A>
-Transition<A>::Transition(state* Vi,state* Vf,T symbol):symbol(symbol){
-    states[0]=Vi;
-    states[1]=Vf;
-}
-
-template <typename A>
-Transition<A>::~Transition(){
-    states[0] = states[1] = nullptr;
-}
-
-
-template <typename A>
-int Transition<A>::getSymbol(){ return symbol; }
-
-
-template <typename A>
-bool Transition<A>::operator==(Transition<A> cmp){
-  return states[0] == cmp.states[0] &&
-         states[1] == cmp.states[1] &&
-         symbol == cmp.symbol;
-}
-
-template <typename A>
-bool Transition<A>::operator>(Transition<A> cmp) const{
-    // Compare symbols. If equal, compare states value
-    return cmp.symbol==symbol? states[1]>cmp.states[1] : symbol>cmp.symbol;
-}
-
-template <typename A>
-bool Transition<A>::operator<(Transition<A> cmp) const{
- return cmp.symbol==symbol? states[1]<cmp.states[1] : symbol<cmp.symbol;
-}
 
 #endif
