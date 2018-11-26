@@ -97,7 +97,7 @@ class Automata{
 
         self AFNtoAFD(self* transpuesto);
 
-        void uncheckCell(vector<vector<bool>>& M, StatesCoord touncheck, map<pair<S, S>,StatesCoord*> mapofcoordinates);
+        void uncheckCell(vector<vector<bool>>& M, int r, int c, map<pair<int, int>,StatesCoord*> mapofcoordinates);
 
     public:
 
@@ -638,12 +638,12 @@ vector<vector<bool>> automata::equivalenceN4(){
 }
 
 template<>
-void automata::uncheckCell(vector<vector<bool>>& M, StatesCoord touncheck, map<pair<S, S>,StatesCoord*> mapofcoordinates){
-    if (!M[touncheck.r][touncheck.c]) return; // already unchecked
-    M[touncheck.r][touncheck.c] = 0;
-    for ( auto& thedependency : (*mapofcoordinates[make_pair(touncheck.stateX->getName(), touncheck.stateY->getName())]).dependencies ){
+void automata::uncheckCell(vector<vector<bool>>& M, int r, int c, map<pair<int, int>,StatesCoord*> mapofcoordinates){
+    if (!M[r][c]) return; // already unchecked
+    M[r][c] = 0;
+    for ( auto& thedependency : (*mapofcoordinates[make_pair(r, c)]).dependencies ){
         if (M[thedependency.r][thedependency.c]){ // if checked, uncheck
-            uncheckCell(M, thedependency, mapofcoordinates);
+            uncheckCell(M, thedependency.r, thedependency.c, mapofcoordinates);
         }
     }
 }
@@ -655,11 +655,11 @@ vector<vector<bool>> automata::equivalenceN2(){
     vector<vector<bool>> M(sizeOfAutomata[0], vector<bool>(sizeOfAutomata[0],1));
 
     // Create coordinates
-    map<pair<S, S>,StatesCoord*> mapofcoordinates;
+    map<pair<int, int>,StatesCoord*> mapofcoordinates;
     for (int r=0; r<sizeOfAutomata[0] ; ++r){
         for (int c=0; c<r; ++c){
             StatesCoord* temp = new StatesCoord(states[to_string(r)], states[to_string(c)], r, c);
-            mapofcoordinates.insert(make_pair( make_pair(to_string(r), to_string(c)), temp ));
+            mapofcoordinates.insert(make_pair( make_pair(r, c), temp ));
         }
     }
 
@@ -669,7 +669,7 @@ vector<vector<bool>> automata::equivalenceN2(){
             int rnext = stoi(thecoord.second->stateX->transitions[i]->states[1]->getName());
             int cnext = stoi(thecoord.second->stateY->transitions[i]->states[1]->getName());
             if (rnext!=cnext){
-                auto* pcoord = mapofcoordinates[make_pair(to_string(max(rnext, cnext)), to_string(min(rnext, cnext)))];
+                auto* pcoord = mapofcoordinates[make_pair(max(rnext, cnext), min(rnext, cnext))];
                 pcoord->addToDependencies(*thecoord.second);
             }
         }
@@ -681,7 +681,7 @@ vector<vector<bool>> automata::equivalenceN2(){
             if ((finalStates.find(to_string(c))==finalStates.end()) +
                 (finalStates.find(to_string(r))==finalStates.end()) == 1){
                 auto temp = StatesCoord(states[to_string(r)], states[to_string(c)], r, c);
-                uncheckCell(M, *mapofcoordinates[make_pair(to_string(r), to_string(c))] , mapofcoordinates);
+                uncheckCell(M, r, c , mapofcoordinates);
             }
         }
     }
